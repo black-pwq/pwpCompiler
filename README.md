@@ -14,3 +14,4 @@ The output will be
 int main() { return 0; }
 ```
 目前项目中未添加Koopa库，上述指令中含koopa串的参数暂无意义。
+123

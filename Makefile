@@ -38,10 +38,10 @@ TOP_DIR := $(shell pwd)
 TARGET_EXEC := compiler
 SRC_DIR := $(TOP_DIR)/src
 BUILD_DIR ?= $(TOP_DIR)/build
-LIB_DIR ?= $(CDE_LIBRARY_PATH)/native
-INC_DIR ?= $(CDE_INCLUDE_PATH)
-CFLAGS += -I$(INC_DIR)
-CXXFLAGS += -I$(INC_DIR)
+# LIB_DIR ?= $(CDE_LIBRARY_PATH)/native
+# INC_DIR ?= $(CDE_INCLUDE_PATH)
+# CFLAGS += -I$(INC_DIR)
+# CXXFLAGS += -I$(INC_DIR)
 LDFLAGS += -L$(LIB_DIR) -lkoopa
 
 # Source files & target files
@@ -65,7 +65,8 @@ CPPFLAGS = $(INC_FLAGS) -MMD -MP
 
 # Main target
 $(BUILD_DIR)/$(TARGET_EXEC): $(FB_SRCS) $(OBJS)
-	$(CXX) $(OBJS) $(LDFLAGS) -lpthread -ldl -o $@
+	$(CXX) $(OBJS) -lpthread -ldl -o $@
+# add $(LDFLAGS) if link with koopa
 
 # C source
 define c_recipe

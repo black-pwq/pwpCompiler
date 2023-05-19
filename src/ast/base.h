@@ -10,4 +10,5 @@ struct BaseAST
 	void dumpOuter(std::string name, const int i) const;
 	void indent(const int i) const;
 	virtual void dumpInner(const int i) const = 0;
+	
 };

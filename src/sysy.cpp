@@ -3,6 +3,34 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include "ast/ast.h"
+
+#include <algorithm>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <vector>
+
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
+
+using namespace llvm;
+
+static std::unique_ptr<LLVMContext> TheContext;
+static std::unique_ptr<Module> TheModule;
+static std::unique_ptr<IRBuilder<>> Builder;
+static std::map<std::string, Value *> NamedValues;
 
 using namespace std;
 
@@ -12,7 +40,7 @@ using namespace std;
 // 你的代码编辑器/IDE 很可能找不到这个文件, 然后会给你报错 (虽然编译不会出错)
 // 看起来会很烦人, 于是干脆采用这种看起来 dirty 但实际很有效的手段
 extern FILE *yyin;
-extern int yyparse(unique_ptr<string> &ast);
+extern int yyparse(unique_ptr<BaseAST> &ast);
 
 int main(int argc, const char *argv[]) {
   // 解析命令行参数. 测试脚本/评测平台要求你的编译器能接收如下参数:
@@ -27,11 +55,11 @@ int main(int argc, const char *argv[]) {
   assert(yyin);
 
   // 调用 parser 函数, parser 函数会进一步调用 lexer 解析输入文件的
-  unique_ptr<string> ast;
+  unique_ptr<BaseAST> ast;
   auto ret = yyparse(ast);
   assert(!ret);
 
   // 输出解析得到的 AST, 其实就是个字符串
-  cout << *ast << endl;
+  ast->dump();
   return 0;
 }

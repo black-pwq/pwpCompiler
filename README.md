@@ -7,10 +7,23 @@
 Ensure you are in the top directory
 ```
 make
-build/compiler -koopa code/mex.c -o hello.koopa
+build/compiler -mode code/mex.c -o hello
 ```
-The output will be
+The output will be something like
 ```
-int main() { return 0; }
+CompUnit {
+  FunDef {
+    SimpleType {
+      int
+    }
+    main
+    BlockStmt {
+      RetStmt {
+        IntExpr {
+          0
+        }
+      }
+    }
+  }
+}
 ```
-目前项目中未添加Koopa库，上述指令中含koopa串的参数暂无意义。

@@ -1,12 +1,12 @@
 %code requires {
   #include <memory>
-  #include "ast/ast.h"
+  #include "ast.h"
   #include <string>
 }
 
 %{
 
-#include "ast/ast.h"
+#include "ast.h"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -37,7 +37,7 @@ using namespace std;
   Stmt *stmt_val;
   Type *type_val;
   Expr *expr_val;
-  BlockStmt *block_val;
+  Block *block_val;
 }
 
 // lexer 返回的所有 token 种类的声明
@@ -62,8 +62,7 @@ using namespace std;
 // $1 指代规则里第一个符号的返回值, 也就是 FuncDef 的返回值
 CompUnit
   : FuncDef {
-    auto comp_unit = make_unique<CompUnit>();
-    comp_unit->func_def = unique_ptr<FunDef>($1);
+    auto comp_unit = make_unique<CompUnit>($1);
     ast = move(comp_unit);
   }
   ;
@@ -82,19 +81,19 @@ FuncType
 
 Block
   : '{' Stmt '}' {
-    $$ = new BlockStmt($2);
+    $$ = new Block($2);
   }
   ;
 
 Stmt
   : RETURN Number ';' {
-    $$ = new RetStmt($2);
+    $$ = new Return($2);
   }
   ;
 
 Number
   : INT_CONST {
-    $$ = new IntExpr($1);
+    $$ = new NumExpr<int>($1);
   }
   ;
 

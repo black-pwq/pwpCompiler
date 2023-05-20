@@ -42,7 +42,7 @@ BUILD_DIR ?= $(TOP_DIR)/build
 # INC_DIR ?= $(CDE_INCLUDE_PATH)
 # CFLAGS += -I$(INC_DIR)
 # CXXFLAGS += -I$(INC_DIR)
-LDFLAGS += -L$(LIB_DIR) -lkoopa
+# LDFLAGS += -L$(LIB_DIR) -lkoopa
 
 # Source files & target files
 FB_SRCS := $(patsubst $(SRC_DIR)/%.l, $(BUILD_DIR)/%.lex$(FB_EXT), $(shell find $(SRC_DIR) -name "*.l"))
@@ -65,8 +65,7 @@ CPPFLAGS = $(INC_FLAGS) -MMD -MP
 
 # Main target
 $(BUILD_DIR)/$(TARGET_EXEC): $(FB_SRCS) $(OBJS)
-	$(CXX) $(OBJS) -lpthread -ldl -o $@
-# add $(LDFLAGS) if link with koopa
+	$(CXX) $(OBJS) $(LDFLAGS) -lpthread -ldl -o $@
 
 # C source
 define c_recipe

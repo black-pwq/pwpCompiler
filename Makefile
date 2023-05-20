@@ -12,7 +12,7 @@ endif
 
 # Flags
 CFLAGS := -Wall -std=c11
-CXXFLAGS := -Wall -Wno-register -std=c++17
+CXXFLAGS := -Wall -Wno-register -std=c++14
 FFLAGS :=
 BFLAGS := -d
 LDFLAGS :=
@@ -42,7 +42,10 @@ BUILD_DIR ?= $(TOP_DIR)/build
 # INC_DIR ?= $(CDE_INCLUDE_PATH)
 # CFLAGS += -I$(INC_DIR)
 # CXXFLAGS += -I$(INC_DIR)
-LDFLAGS += -L$(LIB_DIR) -lkoopa
+CXXFLAGS += $(shell llvm-config --cxxflags )
+
+# LDFLAGS += -L$(LIB_DIR) -lkoopa 
+LDFLAGS +=  $(shell llvm-config --ldflags --system-libs --libs core)
 
 # Source files & target files
 FB_SRCS := $(patsubst $(SRC_DIR)/%.l, $(BUILD_DIR)/%.lex$(FB_EXT), $(shell find $(SRC_DIR) -name "*.l"))
@@ -65,7 +68,7 @@ CPPFLAGS = $(INC_FLAGS) -MMD -MP
 
 # Main target
 $(BUILD_DIR)/$(TARGET_EXEC): $(FB_SRCS) $(OBJS)
-	$(CXX) $(OBJS) -lpthread -ldl -o $@
+	$(CXX) $(LDFLAGS)  $(OBJS) -lpthread -ldl -o $@
 # add $(LDFLAGS) if link with koopa
 
 # C source

@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include "ast.h"
+#include "llvm.h"
 
 using namespace std;
 

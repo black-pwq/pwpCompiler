@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cxxabi.h>
 #include "symbol.h"
-
+#include "llvm.h"
 extern int yylineno;
 
 struct BaseAST
@@ -14,6 +14,7 @@ struct BaseAST
 	BaseAST() : lineno(yylineno) {}
 	virtual ~BaseAST() = default;
 	void dump(const int i = 0) const;
+
 
 protected:
 	void indent(const int i) const;
@@ -27,6 +28,7 @@ struct Type : BaseAST
 {
 	std::unique_ptr<Symbol> name;
 	Type(Symbol *n) : name(n) {}
+	
 
 protected:
 	void dumpInner(const int i) const override;

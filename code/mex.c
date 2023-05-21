@@ -1,5 +1,5 @@
 void eee(int i ){
-  int k = 10;
+  int k = 2+2;
 }
 
 int main() {

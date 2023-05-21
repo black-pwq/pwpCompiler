@@ -1,5 +1,7 @@
 #include "ast.h"
+
 using namespace std;
+
 
 void BaseAST::dump(const int i) const {
 	indent(i);

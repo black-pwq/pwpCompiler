@@ -1,2 +1,2 @@
 make
-build/compiler -mode code/mex.c -o hello
+build/compiler code/mex.c

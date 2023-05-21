@@ -38,14 +38,12 @@ TOP_DIR := $(shell pwd)
 TARGET_EXEC := compiler
 SRC_DIR := $(TOP_DIR)/src
 BUILD_DIR ?= $(TOP_DIR)/build
-# LIB_DIR ?= $(CDE_LIBRARY_PATH)/native
-# INC_DIR ?= $(CDE_INCLUDE_PATH)
-# CFLAGS += -I$(INC_DIR)
-# CXXFLAGS += -I$(INC_DIR)
+
 CXXFLAGS += $(shell llvm-config --cxxflags )
 
-# LDFLAGS += -L$(LIB_DIR) -lkoopa 
+
 LDFLAGS +=  $(shell llvm-config --ldflags --system-libs --libs core)
+
 
 # Source files & target files
 FB_SRCS := $(patsubst $(SRC_DIR)/%.l, $(BUILD_DIR)/%.lex$(FB_EXT), $(shell find $(SRC_DIR) -name "*.l"))

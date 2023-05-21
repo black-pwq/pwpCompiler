@@ -61,3 +61,24 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 .               { return yytext[0]; }
 
 %%
+
+/* "="             return ASSIGN;
+"<"             return LT;
+">"             return GT;
+"("             return LL;
+")"             return RR;
+"["             return LSQUARE;
+"]"             return RSQUARE;
+"{"             return LBRACE;
+"}"             return RBRACE;
+"."             return DOT;
+","             return COMMA;
+";"             return SEMI;
+"++"            return PLUSPLUS;
+"--"            return MINUSMINUS;
+"+"             return PLUS;
+"-"             return MINUS;
+"*"             return MUL;
+"/"             return DIV;
+"%"             return MOD;
+"!"             return NOT; */

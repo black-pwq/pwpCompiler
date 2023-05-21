@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cxxabi.h>
 #include "symbol.h"
-#include "../llvm.h"
+#include "llvm.h"
 
 extern int yylineno;
 

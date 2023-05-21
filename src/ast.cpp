@@ -33,7 +33,7 @@ void Return::dumpInner(const int i) const {
 }
 
 void Block::dumpInner(const int i) const {
-	for(auto &s : stmts) {
+	for(auto &s : items) {
 		s->dump(i);
 	}
 }
@@ -44,12 +44,11 @@ void CompUnit::dumpInner(const int i) const {
 }
 
 void Field::dumpInner(const int i) const{
-	indent(i);
-	cout << *type << endl;
+	type->dump(i);
 	name->dump(i);
 }
 
-void SimpleType::dumpInner(const int i) const {
+void Type::dumpInner(const int i) const {
 	indent(i);
 	cout << *name << endl;
 }

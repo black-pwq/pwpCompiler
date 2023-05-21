@@ -22,14 +22,11 @@ protected:
 
 struct Var;
 // Type
+
 struct Type : BaseAST
 {
-};
-
-struct SimpleType : Type
-{
 	std::unique_ptr<Symbol> name;
-	SimpleType(Symbol *n) : name(n) {}
+	Type(Symbol *n) : name(n) {}
 
 protected:
 	void dumpInner(const int i) const override;
@@ -37,9 +34,9 @@ protected:
 
 struct Field : BaseAST
 {
-	std::unique_ptr<Symbol> type;
+	std::unique_ptr<Type> type;
 	std::unique_ptr<Var> name;
-	Field(Symbol *t, Var *n) : type(t), name(n) {}
+	Field(Type *t, Var *n) : type(t), name(n) {}
 
 protected:
 	void dumpInner(const int i) const override;
@@ -48,10 +45,7 @@ protected:
 using FieldList = std::vector<std::unique_ptr<Field>>;
 
 // Expr
-struct Expr: BaseAST {
-protected:
-	void dumpInner(const int i) const {BaseAST::dumpInner(i);}
-};
+struct Expr: BaseAST {};
 
 enum BiOp {bi_add, bi_sub, bi_times, bi_divide, bi_and, bi_or, bi_eq, bi_neq, bi_lt, bi_le, bi_gt, bi_ge};
 enum UniOp {uni_plus, uni_minus, uni_not};
@@ -77,19 +71,16 @@ protected:
 	void dumpInner(const int i) const override { indent(i); std::cout << num << std::endl; } 
 };
 
-struct ExprList: Expr {
-	std::vector<std::unique_ptr<Expr>> list;
-	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
+// Stmt
+struct Item : BaseAST {};
+struct Stmt : Item
+{
 };
 
-// struct AddressExpr : Expr {
-// 	std::unique_ptr<Var> var;
-// 	AddressExpr(Var *v) : var(v) {}
-// };
-
-// Stmt
-struct Stmt : BaseAST
-{
+struct ExprList: Expr, Stmt {
+	std::vector<std::unique_ptr<Expr>> list;
+	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
+	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 };
 
 struct Assign : Stmt {
@@ -139,24 +130,21 @@ protected:
 struct Break : Stmt {};
 struct Continue : Stmt {};
 
-using StmtList = std::vector<std::unique_ptr<Stmt>>;
+using ItemList = std::vector<std::unique_ptr<Item>>;
 
 struct Block : Stmt
 {
-	StmtList stmts;
+	ItemList items;
 	Block() = default;
-	Block(Stmt *s) { stmts.emplace_back(std::unique_ptr<Stmt>(s)); }
-	void append(Stmt *s) {stmts.emplace_back(std::unique_ptr<Stmt>(s));}
+	Block(Item *s) { append(s); }
+	void append(Item *s) {items.emplace_back(std::unique_ptr<Item>(s));}
 
 protected:
 	void dumpInner(const int i) const override;
 };
 
 // Var
-struct Var: Expr {
-protected:
-	void dumpInner(const int i) const {Expr::dumpInner(i);}
-};
+struct Var: Expr { };
 
 struct SimpleVar: Var {
 	std::unique_ptr<Symbol> sym;
@@ -171,15 +159,35 @@ struct ArrayVar: Var {
 	ArrayVar(Var *v, Expr *e) : var(v), expr(e) {}
 };
 
+struct VarDef : BaseAST {
+	std::unique_ptr<Var> name;
+	VarDef(Var *n) : name(n) {}
+};
+using VarDefs = std::vector<std::unique_ptr<VarDef>>;
+
+struct InitVarDef : VarDef {
+	std::unique_ptr<Var> name;
+	std::unique_ptr<Expr> expr;
+	InitVarDef(Var *n, Expr *e) : VarDef(n), expr(e) {}
+};
+
+struct InitArrayDef : VarDef {
+	std::unique_ptr<Var> name;
+	std::unique_ptr<ExprList> exprs;
+	InitArrayDef(Var *n, ExprList *e) : VarDef(n), exprs(e) {}
+};
+
+
 // Unit
 struct Unit : BaseAST {};
 
-struct Decl : Unit {};
+struct Decl : Unit, Item {};
 
 struct VarDecl : Decl {
-	std::unique_ptr<Symbol> type;
-	std::unique_ptr<Var> var;
-	VarDecl(Symbol *t, Var *v) : type(t), var(v) {}
+	std::unique_ptr<Type> type;
+	std::unique_ptr<VarDefs> vars;
+	VarDecl(Type *t, VarDefs *v) : type(t), vars(v) {}
+	void append(VarDef *v) {vars->emplace_back(std::unique_ptr<VarDef>(v));}
 };
 
 // Fun
@@ -199,6 +207,7 @@ protected:
 struct CompUnit : BaseAST
 {
 	std::vector<std::unique_ptr<Unit>> units;
+	CompUnit() = default;
 	CompUnit(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
 	void append(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
 protected:

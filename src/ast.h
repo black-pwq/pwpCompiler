@@ -79,6 +79,7 @@ struct Stmt : Item
 
 struct ExprList: Expr, Stmt {
 	std::vector<std::unique_ptr<Expr>> list;
+	ExprList() = default;
 	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 protected:

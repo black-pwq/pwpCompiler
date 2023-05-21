@@ -118,9 +118,10 @@ Var
 F
 	: INT_CONST   {$$ = new NumExpr<int>($1);}
   | FLOAT_CONST {$$ = new NumExpr<float>($1);}
-  | IDENT '(' ExprList ')' {$$ = new Call($1, $3);}
-  | Var         {$$ = $1;}
-	| '(' E ')'		{$$ = $2;}
+  | IDENT '(' ExprList ')'  {$$ = new Call($1, $3);}
+  | IDENT '(' ')'           {$$ = new Call($1, new ExprList());}
+  | Var                     {$$ = $1;}
+	| '(' Expr ')'		        {$$ = $2;}
 	;
 
 R

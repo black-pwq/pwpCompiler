@@ -81,6 +81,11 @@ struct ExprList: Expr, Stmt {
 	std::vector<std::unique_ptr<Expr>> list;
 	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
+protected:
+	void dumpInner(const int i) const override {
+		for(auto &e : list) 
+			e->dump(i);
+	}
 };
 
 struct Assign : Expr {
@@ -88,6 +93,13 @@ struct Assign : Expr {
 	std::unique_ptr<Expr> expr;
 	Assign(Var *v, Expr *e) : var(v), expr(e) {}
 };
+
+struct Call : Expr {
+	std::unique_ptr<Symbol> name;
+	std::unique_ptr<ExprList> params;
+	Call(Symbol *n, ExprList *p) : name(n), params(p) {}
+};
+
 
 struct If : Stmt {
 	std::unique_ptr<Expr> expr;

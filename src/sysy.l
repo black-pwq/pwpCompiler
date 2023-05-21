@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <string>
 
-// 因为 Flex 会用到 Bison 中关于 token 的定义
+// 因为 Flex 会用到 Bison 中关于  的定义
 // 所以需要 include Bison 生成的头文件
 #include "sysy.tab.hpp"
 
@@ -36,10 +36,42 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 "int"           { return INT; }
 "float"           { return FLOAT; }
 "return"        { return RETURN; }
-"break" 		{return BREAK;}
-"continue" 		{return CONTINUE;}
-"if" 			{return IF;}
-"while"			{return WHILE;}
+"if"            return IF;
+"else"          return ELSE;
+"while"         return WHILE;
+"for"           return FOR;
+"break"         return BREAK;
+"continue"      return CONTINUE;
+"const"         return CONST;
+"void"          return VOID;
+"=="            return EQ;
+"!="            return NEQ;
+"<="            return LE;
+">="            return GE;
+"&&"            return AND;
+"||"            return OR;
+
+
+/* "="             return ASSIGN;
+"<"             return LT;
+">"             return GT;
+"("             return LL;
+")"             return RR;
+"["             return LSQUARE;
+"]"             return RSQUARE;
+"{"             return LBRACE;
+"}"             return RBRACE;
+"."             return DOT;
+","             return COMMA;
+";"             return SEMI;
+"++"            return PLUSPLUS;
+"--"            return MINUSMINUS;
+"+"             return PLUS;
+"-"             return MINUS;
+"*"             return MUL;
+"/"             return DIV;
+"%"             return MOD;
+"!"             return NOT; */
 
 {Identifier}    { yylval.str_val = new string(yytext); return IDENT; }
 

@@ -53,7 +53,7 @@ using namespace std;
 /* %type FunDef Block Stmt Number VarDecl VarDef Decl */
 /* %type <comp_val> CompUnit */
 %type <fundef_val> FunDef
-%type <expr_val> T F E R Eq C Cond And
+%type <expr_val> T F E R Eq C Cond And Expr
 %type <block_val> Block BlockItems
 %type <stmt_val> Stmt
 %type <vardef_val> VarDef
@@ -106,8 +106,8 @@ ArrayInitVal
   ;
 
 ExprList
-  : E                   {$$ = new ExprList($1);}
-  | ExprList ',' E      {$1->append($3); $$ = $1;}
+  : Expr                   {$$ = new ExprList($1);}
+  | ExprList ',' Expr      {$1->append($3); $$ = $1;}
   ;
 
 Var 
@@ -165,6 +165,11 @@ Cond
   | Cond OR And {$$ = new BiExpr($1, BiOp::bi_or, $3);}
   ;
 
+Expr 
+  : Cond        {$$ = $1;}
+  | Var '=' Cond{$$ = new Assign($1, $3);}
+  ;
+
 FunDef
   : BType IDENT '(' FunFP ')' Block {$$ = new FunDef($1, $2, $4, $6);}
   | VOID IDENT '(' FunFP ')' Block  {$$ = new FunDef(new Type(new string("void")), $2, $4, $6);}
@@ -188,13 +193,13 @@ BlockItems
   ;
 
 Stmt
-  : Var '=' E ';'     {$$ = new Assign($1, $3);}
-  | Block             {$$ = $1;}
+  : Block             {$$ = $1;}
   | ';'               {$$ = new Stmt();}
   | ExprList ';'      {$$ = $1;}
-  | IF '(' E ')' Stmt {$$ = new If($3, $5);}
-  | IF '(' E ')' Stmt ELSE Stmt {$$ = new IfElse($3, $5, $7);}
-  | WHILE '(' E ')' Stmt  {$$ = new While($3, $5);}
+  | IF '(' Cond ')' Stmt {$$ = new If($3, $5);}
+  | IF '(' Cond ')' Stmt ELSE Stmt            {$$ = new IfElse($3, $5, $7);}
+  | WHILE '(' Cond ')' Stmt                   {$$ = new While($3, $5);}
+  | FOR '(' Expr ';' Cond ';' Expr ')' Stmt   {$$ = new For($3, $5, $7, $9);}
   | CONTINUE ';'      {$$ = new Continue();}
   | BREAK ';'         {$$ = new Break();}
   | RETURN E ';'      {$$ = new Return($2);}

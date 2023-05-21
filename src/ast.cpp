@@ -11,6 +11,7 @@ void BaseAST::dump(const int i) const {
 }
 
 void BaseAST::dumpInner(const int i) const {
+	indent(i);
 	std::cout << "NONPRINTABLE" << std::endl;
 }
 

@@ -118,6 +118,7 @@ Var
 F
 	: INT_CONST   {$$ = new NumExpr<int>($1);}
   | FLOAT_CONST {$$ = new NumExpr<float>($1);}
+  | IDENT '(' ExprList ')' {$$ = new Call($1, $3);}
   | Var         {$$ = $1;}
 	| '(' E ')'		{$$ = $2;}
 	;

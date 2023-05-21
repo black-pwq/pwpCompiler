@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cxxabi.h>
 #include "symbol.h"
-#include "llvm.h"
+
 extern int yylineno;
 
 struct BaseAST
@@ -14,7 +14,6 @@ struct BaseAST
 	BaseAST() : lineno(yylineno) {}
 	virtual ~BaseAST() = default;
 	void dump(const int i = 0) const;
-
 
 protected:
 	void indent(const int i) const;
@@ -28,7 +27,6 @@ struct Type : BaseAST
 {
 	std::unique_ptr<Symbol> name;
 	Type(Symbol *n) : name(n) {}
-	
 
 protected:
 	void dumpInner(const int i) const override;
@@ -83,6 +81,11 @@ struct ExprList: Expr, Stmt {
 	std::vector<std::unique_ptr<Expr>> list;
 	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
+protected:
+	void dumpInner(const int i) const override {
+		for(auto &e : list) 
+			e->dump(i);
+	}
 };
 
 struct Assign : Expr {
@@ -90,6 +93,13 @@ struct Assign : Expr {
 	std::unique_ptr<Expr> expr;
 	Assign(Var *v, Expr *e) : var(v), expr(e) {}
 };
+
+struct Call : Expr {
+	std::unique_ptr<Symbol> name;
+	std::unique_ptr<ExprList> params;
+	Call(Symbol *n, ExprList *p) : name(n), params(p) {}
+};
+
 
 struct If : Stmt {
 	std::unique_ptr<Expr> expr;

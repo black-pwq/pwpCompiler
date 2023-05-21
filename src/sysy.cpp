@@ -5,7 +5,6 @@
 #include <string>
 #include "ast.h"
 
-
 using namespace std;
 
 extern FILE *yyin;

@@ -124,6 +124,8 @@ F
 
 R
 	: '-' F				{$$ = new UniExpr(UniOp::uni_minus, $2);}
+	| '+' F				{$$ = new UniExpr(UniOp::uni_plus, $2);}
+	| '!' F				{$$ = new UniExpr(UniOp::uni_not, $2);}
 	| F           {$$ = $1;}
 	;
 

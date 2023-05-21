@@ -36,21 +36,31 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 "int"           { return INT; }
 "float"           { return FLOAT; }
 "return"        { return RETURN; }
-"if"            return IF;
-"else"          return ELSE;
-"while"         return WHILE;
-"for"           return FOR;
-"break"         return BREAK;
-"continue"      return CONTINUE;
-"const"         return CONST;
-"void"          return VOID;
-"=="            return EQ;
-"!="            return NEQ;
-"<="            return LE;
-">="            return GE;
-"&&"            return AND;
-"||"            return OR;
+"if"            {return IF;}
+"else"          {return ELSE;}
+"while"         {return WHILE;}
+"for"           {return FOR;}
+"break"         {return BREAK;}
+"continue"      {return CONTINUE;}
+"const"         {return CONST;}
+"void"          {return VOID;}
+"=="            {return EQ;}
+"!="            {return NEQ;}
+"<="            {return LE;}
+">="            {return GE;}
+"&&"            {return AND;}
+"||"            {return OR;}
 
+
+{Identifier}    { yylval.str_val = new string(yytext); return IDENT; }
+
+{Decimal}       { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
+{Octal}         { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
+{Hexadecimal}   { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
+
+.               { return yytext[0]; }
+
+%%
 
 /* "="             return ASSIGN;
 "<"             return LT;
@@ -72,13 +82,3 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 "/"             return DIV;
 "%"             return MOD;
 "!"             return NOT; */
-
-{Identifier}    { yylval.str_val = new string(yytext); return IDENT; }
-
-{Decimal}       { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
-{Octal}         { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
-{Hexadecimal}   { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
-
-.               { return yytext[0]; }
-
-%%

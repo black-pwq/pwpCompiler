@@ -14,7 +14,7 @@ endif
 CFLAGS := -Wall -std=c11
 CXXFLAGS := -Wall -Wno-register -std=c++17
 FFLAGS :=
-BFLAGS := -d
+BFLAGS := -v -d 
 LDFLAGS :=
 
 # Debug flags

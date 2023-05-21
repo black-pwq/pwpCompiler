@@ -19,8 +19,20 @@ void BaseAST::indent(const int i) const {
 		std::cout << "  ";
 }
 
-void FunDef::dumpInner(const int i) const {
-	type->dump(i);
+llvm::Function *FunDef::codegen()
+{
+
+	if(typeid(*name) == typeid(SimpleType)){
+		if((static_cast<SimpleType>(*name)).compare("Hello World")){	
+
+		}
+	}
+    return nullptr;
+}
+
+void FunDef::dumpInner(const int i) const
+{
+    type->dump(i);
 	indent(i);
 	cout << *name << endl;
 	for(auto &f : *fields) 
@@ -28,28 +40,124 @@ void FunDef::dumpInner(const int i) const {
 	block->dump(i);
 }
 
-void Return::dumpInner(const int i) const {
-	expr->dump(i);
+llvm::Value *Return::codegen()
+{
+    return nullptr;
 }
 
-void Block::dumpInner(const int i) const {
-	for(auto &s : stmts) {
+void Return::dumpInner(const int i) const
+{
+    expr->dump(i);
+}
+
+llvm::Value *Block::codegen()
+{
+    return nullptr;
+}
+
+void Block::dumpInner(const int i) const
+{
+    for(auto &s : stmts) {
 		s->dump(i);
 	}
 }
 
-void CompUnit::dumpInner(const int i) const {
-	for(auto &u : units)
+llvm::Value *CompUnit::codegen()
+{
+    return nullptr;
+}
+
+void CompUnit::dumpInner(const int i) const
+{
+    for(auto &u : units)
 		u->dump(i);
 }
 
-void Field::dumpInner(const int i) const{
-	indent(i);
+llvm::Value *Field::codegen()
+{
+    return nullptr;
+}
+
+void Field::dumpInner(const int i) const
+{
+    indent(i);
 	cout << *type << endl;
 	name->dump(i);
 }
 
-void SimpleType::dumpInner(const int i) const {
-	indent(i);
+// llvm::Value *SimpleType::codegen()
+// {
+	
+//     return nullptr;
+// }
+
+void SimpleType::dumpInner(const int i) const
+{
+    indent(i);
 	cout << *name << endl;
+}
+
+llvm::Value *Expr::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *UniExpr::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *BiExpr::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *ExprList::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *Assign::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *If::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *IfElse::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *While::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *For::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *Var::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *SimpleVar::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *ArrayVar::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *VarDecl::codegen()
+{
+    return nullptr;
 }

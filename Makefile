@@ -68,7 +68,7 @@ CPPFLAGS = $(INC_FLAGS) -MMD -MP
 
 # Main target
 $(BUILD_DIR)/$(TARGET_EXEC): $(FB_SRCS) $(OBJS)
-	$(CXX) $(OBJS) -lpthread -ldl -o $@
+	$(CXX) $(OBJS) -lpthread -ldl $(LDFLAGS) -o $@
 # add $(LDFLAGS) if link with koopa
 
 # C source

@@ -13,7 +13,7 @@
 #include <memory>
 #include <vector>
 
-
+#include "../llvm.h"
 
 using namespace std;
 
@@ -21,6 +21,8 @@ extern FILE *yyin;
 extern int yyparse(unique_ptr<BaseAST> &ast);
 
 int main(int argc, const char *argv[]) {
+  InitializeModule();
+   
   // compiler 模式 输入文件 -o 输出文件
   assert(argc == 5);
   auto mode = argv[1];

@@ -7,7 +7,7 @@
 Ensure you are in the top directory
 ```
 make
-build/compiler -mode code/mex.c -o hello
+build/compiler code/mex.c
 ```
 The output will be something like
 ```

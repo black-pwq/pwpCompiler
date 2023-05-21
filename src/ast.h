@@ -83,7 +83,7 @@ struct ExprList: Expr, Stmt {
 	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 };
 
-struct Assign : Stmt {
+struct Assign : Expr {
 	std::unique_ptr<Var> var;
 	std::unique_ptr<Expr> expr;
 	Assign(Var *v, Expr *e) : var(v), expr(e) {}
@@ -110,11 +110,19 @@ struct While : Stmt {
 };
 
 struct For : Stmt {
-	std::unique_ptr<Stmt> init;
+	std::unique_ptr<Expr> init;
 	std::unique_ptr<Expr> expr;
-	std::unique_ptr<Stmt> tail;
+	std::unique_ptr<Expr> tail;
 	std::unique_ptr<Stmt> body;
-	For(Stmt *i, Expr *e, Stmt *t, Stmt *b) : init(i), expr(e), tail(t), body(b) {}
+	For(Expr *i, Expr *e, Expr *t, Stmt *b) : init(i), expr(e), tail(t), body(b) {}
+
+protected:
+	void dumpInner(const int i) const override {
+		init->dump(i);
+		expr->dump(i);
+		tail->dump(i);
+		body->dump(i);
+	}
 };
 
 

@@ -61,6 +61,14 @@ struct BiExpr: Expr {
 	BiOp op;
 	std::unique_ptr<Expr> right;
 	BiExpr(Expr *l, BiOp o, Expr *r) : left(l), op(o), right(r) {}
+protected:
+	void dumpInner(const int i) const override {
+		const std::string opNames[] = {"+","-", "*", "/", "&&", "||", "==", "!=", "<", "<=", ">", ">="};
+		left->dump(i);
+		indent(i);
+		std::cout << opNames[op] << std::endl;
+		right->dump(i);
+	}
 };
 
 template<typename T>
@@ -106,6 +114,11 @@ struct If : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
 	If(Expr *e, Stmt *s) : expr(e), stmt(s) {}
+protected:
+	void dumpInner(const int i) const override {
+		expr->dump(i);
+		stmt->dump(i);
+	}
 };
 
 
@@ -114,6 +127,12 @@ struct IfElse : Stmt {
 	std::unique_ptr<Stmt> ts;
 	std::unique_ptr<Stmt> fs;
 	IfElse(Expr *e, Stmt *t, Stmt *f) : expr(e), ts(t), fs(f) {}
+protected:
+	void dumpInner(const int i) const override {
+		expr->dump(i);
+		ts->dump(i);
+		fs->dump(i);
+	}
 };
 
 struct While : Stmt {
@@ -227,6 +246,7 @@ protected:
 // CompUnit
 struct CompUnit : BaseAST
 {
+	int lineno;
 	std::vector<std::unique_ptr<Unit>> units;
 	CompUnit() = default;
 	CompUnit(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}

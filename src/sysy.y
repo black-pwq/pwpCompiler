@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 
+extern int yylineno;
 int yylex();
 void yyerror(std::unique_ptr<CompUnit> &ast, const char *s);
 
@@ -153,8 +154,8 @@ C
 
 Eq
   : C           {$$ = $1;}
-  | Eq EQ C     {$$ = new BiExpr($1, BiOp::bi_ge, $3);}
-  | Eq NEQ C    {$$ = new BiExpr($1, BiOp::bi_ge, $3);}
+  | Eq EQ C     {$$ = new BiExpr($1, BiOp::bi_eq, $3);}
+  | Eq NEQ C    {$$ = new BiExpr($1, BiOp::bi_neq, $3);}
   ;
 
 And
@@ -212,5 +213,5 @@ Stmt
 // 定义错误处理函数, 其中第二个参数是错误信息
 // parser 如果发生错误 (例如输入的程序出现了语法错误), 就会调用这个函数
 void yyerror(unique_ptr<CompUnit> &ast, const char *s) {
-  cerr << "error: " << s << endl;
+  cerr << "error: " << s << " at line " << yylineno << endl;
 }

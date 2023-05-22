@@ -67,12 +67,22 @@ struct UniExpr: Expr {
 
 //Value codegen
 struct BiExpr: Expr {
-	std::unique_ptr<Expr> left;
+	std::shared_ptr<Expr> left; // shared_ptr for binary assignment
 	BiOp op;
-	std::unique_ptr<Expr> right;
+	std::shared_ptr<Expr> right;
 	BiExpr(Expr *l, BiOp o, Expr *r) : left(l), op(o), right(r) {}
 	virtual llvm::Value *codegen() override;
 
+	BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) : left(l), op(o), right(r) {}
+	BiExpr(Expr *l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r) {}
+	BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r) {}
+protected:
+	void dumpInner(const int i) const override; 
+};
+
+struct StringExpr : Expr {
+	std::unique_ptr<std::string> str;
+	StringExpr(std::string *s) : str(s) {}
 };
 
 //Value codegen
@@ -97,6 +107,7 @@ struct Stmt : Item
 //value codegen of the last expr
 struct ExprList: Expr, Stmt {
 	std::vector<std::unique_ptr<Expr>> list;
+	ExprList() = default;
 	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 	ExprList()= default;
 	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
@@ -109,17 +120,6 @@ protected:
 	}
 };
 
-
-//value codegen of the var;
-struct Assign : Expr {
-	std::unique_ptr<Var> var;
-	std::unique_ptr<Expr> expr;
-	Assign(Var *v, Expr *e) : var(v), expr(e) {}
-	virtual llvm::Value *codegen() override;
-
-};
-
-//value codegen of the function
 struct Call : Expr {
 	std::unique_ptr<Symbol> name;
 	std::unique_ptr<ExprList> params;
@@ -133,6 +133,11 @@ struct If : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
 	If(Expr *e, Stmt *s) : expr(e), stmt(s) {}
+protected:
+	void dumpInner(const int i) const override {
+		expr->dump(i);
+		stmt->dump(i);
+	}
 };
 
 //block
@@ -141,6 +146,12 @@ struct IfElse : Stmt {
 	std::unique_ptr<Stmt> ts;
 	std::unique_ptr<Stmt> fs;
 	IfElse(Expr *e, Stmt *t, Stmt *f) : expr(e), ts(t), fs(f) {}
+protected:
+	void dumpInner(const int i) const override {
+		expr->dump(i);
+		ts->dump(i);
+		fs->dump(i);
+	}
 };
 
 //block
@@ -229,6 +240,17 @@ struct InitArrayDef : VarDef {
 	InitArrayDef(Var *n, ExprList *e) : VarDef(n), exprs(e) {}
 };
 
+struct Assign : Expr {
+	std::shared_ptr<Var> var; // shared pointer for binary assignment
+	std::unique_ptr<Expr> expr;
+	Assign(Var *v, Expr *e) : var(v), expr(e) {}
+	Assign(std::shared_ptr<Var> v, Expr *e) : var(v), expr(e) {}
+protected:
+	void dumpInner(const int i) const override {
+		var->dump(i); expr->dump(i);
+	}
+};
+
 
 // Unit
 struct Unit : BaseAST {};
@@ -260,6 +282,7 @@ protected:
 // CompUnit
 struct CompUnit : BaseAST
 {
+	int lineno;
 	std::vector<std::unique_ptr<Unit>> units;
 	CompUnit() = default;
 	CompUnit(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}

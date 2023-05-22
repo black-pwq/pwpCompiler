@@ -57,18 +57,20 @@ struct UniExpr: Expr {
 };
 
 struct BiExpr: Expr {
-	std::unique_ptr<Expr> left;
+	std::shared_ptr<Expr> left; // shared_ptr for binary assignment
 	BiOp op;
-	std::unique_ptr<Expr> right;
+	std::shared_ptr<Expr> right;
 	BiExpr(Expr *l, BiOp o, Expr *r) : left(l), op(o), right(r) {}
+	BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) : left(l), op(o), right(r) {}
+	BiExpr(Expr *l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r) {}
+	BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r) {}
 protected:
-	void dumpInner(const int i) const override {
-		const std::string opNames[] = {"+","-", "*", "/", "&&", "||", "==", "!=", "<", "<=", ">", ">="};
-		left->dump(i);
-		indent(i);
-		std::cout << opNames[op] << std::endl;
-		right->dump(i);
-	}
+	void dumpInner(const int i) const override; 
+};
+
+struct StringExpr : Expr {
+	std::unique_ptr<std::string> str;
+	StringExpr(std::string *s) : str(s) {}
 };
 
 template<typename T>
@@ -95,12 +97,6 @@ protected:
 		for(auto &e : list) 
 			e->dump(i);
 	}
-};
-
-struct Assign : Expr {
-	std::unique_ptr<Var> var;
-	std::unique_ptr<Expr> expr;
-	Assign(Var *v, Expr *e) : var(v), expr(e) {}
 };
 
 struct Call : Expr {
@@ -215,6 +211,17 @@ struct InitArrayDef : VarDef {
 	std::unique_ptr<Var> name;
 	std::unique_ptr<ExprList> exprs;
 	InitArrayDef(Var *n, ExprList *e) : VarDef(n), exprs(e) {}
+};
+
+struct Assign : Expr {
+	std::shared_ptr<Var> var; // shared pointer for binary assignment
+	std::unique_ptr<Expr> expr;
+	Assign(Var *v, Expr *e) : var(v), expr(e) {}
+	Assign(std::shared_ptr<Var> v, Expr *e) : var(v), expr(e) {}
+protected:
+	void dumpInner(const int i) const override {
+		var->dump(i); expr->dump(i);
+	}
 };
 
 

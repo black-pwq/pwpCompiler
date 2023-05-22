@@ -50,6 +50,10 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 ">="            {return GE;}
 "&&"            {return AND;}
 "||"            {return OR;}
+"+="            {return PASSIGN;}
+"-="            {return MASSIGN;}
+"*="            {return TASSIGN;}
+"/="            {return DASSIGN;}
 
 
 {Identifier}    { yylval.str_val = new string(yytext); return IDENT; }

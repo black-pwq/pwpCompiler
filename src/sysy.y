@@ -45,8 +45,8 @@ using namespace std;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN FLOAT VOID BREAK CONTINUE IF ELSE WHILE LE GE EQ NEQ AND OR FOR CONST
-%token <str_val> IDENT
+%token INT RETURN FLOAT VOID BREAK CONTINUE IF ELSE WHILE LE GE EQ NEQ AND OR FOR CONST PASSIGN MASSIGN TASSIGN DASSIGN
+%token <str_val> IDENT STRING
 %token <int_val> INT_CONST
 %token <float_val> FLOAT_CONST
 
@@ -62,7 +62,7 @@ using namespace std;
 %type <var_val> Var
 %type <var_decl_val> VarDecl
 %type <decl_val> Decl
-%type <exprlist_val> ExprList ArrayInitVal
+%type <exprlist_val> ExprList ArrayInitVal FunRP
 %type <fieldlist_val> FunFP
 
 %%
@@ -119,8 +119,7 @@ Var
 F
 	: INT_CONST   {$$ = new NumExpr<int>($1);}
   | FLOAT_CONST {$$ = new NumExpr<float>($1);}
-  | IDENT '(' ExprList ')'  {$$ = new Call($1, $3);}
-  | IDENT '(' ')'           {$$ = new Call($1, new ExprList());}
+  | IDENT '(' FunRP ')'  {$$ = new Call($1, $3);}
   | Var                     {$$ = $1;}
 	| '(' Expr ')'		        {$$ = $2;}
 	;
@@ -170,7 +169,12 @@ Cond
 
 Expr 
   : Cond        {$$ = $1;}
+  | STRING      {$$ = new StringExpr($1);}
   | Var '=' Cond{$$ = new Assign($1, $3);}
+  | Var PASSIGN Cond  {auto v = shared_ptr<Var>($1); $$ = new Assign(v, new BiExpr(v, BiOp::bi_add, $3));}
+  | Var MASSIGN Cond  {auto v = shared_ptr<Var>($1); $$ = new Assign(v, new BiExpr(v, BiOp::bi_sub, $3));}
+  | Var TASSIGN Cond  {auto v = shared_ptr<Var>($1); $$ = new Assign(v, new BiExpr(v, BiOp::bi_times, $3));}
+  | Var DASSIGN Cond  {auto v = shared_ptr<Var>($1); $$ = new Assign(v, new BiExpr(v, BiOp::bi_divide, $3));}
   ;
 
 FunDef
@@ -182,6 +186,11 @@ FunFP
   :                     {$$ = new FieldList();}
   | BType Var           {$$ = new FieldList(); $$->emplace_back(unique_ptr<Field>(new Field($1, $2)));}
   | FunFP ',' BType Var {$1->emplace_back(unique_ptr<Field>(new Field($3, $4))); $$ = $1;}
+  ;
+
+FunRP
+  :           {$$ = new ExprList();}
+  | ExprList  {$$ = $1;}
   ;
 
 Block

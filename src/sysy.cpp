@@ -12,6 +12,8 @@ extern FILE *yyin;
 extern int yyparse(unique_ptr<CompUnit> &ast);
 
 int main(int argc, const char *argv[]) {
+  InitializeModule();
+  
   auto input = argv[1];
 
   // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件

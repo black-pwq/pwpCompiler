@@ -10,6 +10,16 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
+// #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/IR/ValueSymbolTable.h"
+
 #include <map>
 
 static std::unique_ptr<llvm::LLVMContext> TheContext;

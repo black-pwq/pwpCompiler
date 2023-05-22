@@ -5,24 +5,27 @@
 #include <typeinfo>
 #include <cxxabi.h>
 #include "symbol.h"
-
+#include "llvm.h"
 extern int yylineno;
 
+//no instance
 struct BaseAST
 {
 	int lineno;
 	BaseAST() : lineno(yylineno) {}
 	virtual ~BaseAST() = default;
 	void dump(const int i = 0) const;
+	
 
 protected:
 	void indent(const int i) const;
 	virtual void dumpInner(const int i) const;
 };
 
-struct Var;
-// Type
 
+struct Var;
+
+//no codegen 
 struct Type : BaseAST
 {
 	std::unique_ptr<Symbol> name;
@@ -32,6 +35,7 @@ protected:
 	void dumpInner(const int i) const override;
 };
 
+//no codegen
 struct Field : BaseAST
 {
 	std::unique_ptr<Type> type;
@@ -41,46 +45,63 @@ struct Field : BaseAST
 protected:
 	void dumpInner(const int i) const override;
 };
-
+//no codegen
 using FieldList = std::vector<std::unique_ptr<Field>>;
 
 // Expr
-struct Expr: BaseAST {};
+//Value codegen
+struct Expr: BaseAST {
+	virtual llvm::Value *codegen() = 0;
+};
 
 enum BiOp {bi_add, bi_sub, bi_times, bi_divide, bi_and, bi_or, bi_eq, bi_neq, bi_lt, bi_le, bi_gt, bi_ge};
 enum UniOp {uni_plus, uni_minus, uni_not};
 
+//Value codegen
 struct UniExpr: Expr {
 	UniOp op;
 	std::unique_ptr<Expr> expr;
 	UniExpr(UniOp o, Expr *e) : op(o), expr(e) {}
+	virtual llvm::Value *codegen() override;
 };
 
+//Value codegen
 struct BiExpr: Expr {
 	std::unique_ptr<Expr> left;
 	BiOp op;
 	std::unique_ptr<Expr> right;
 	BiExpr(Expr *l, BiOp o, Expr *r) : left(l), op(o), right(r) {}
+	virtual llvm::Value *codegen() override;
+
 };
 
+//Value codegen
 template<typename T>
 struct NumExpr : Expr {
 	const T num;
 	NumExpr(const T n) : num(n) {}
+	virtual llvm::Value *codegen() override;
+
 protected:
 	void dumpInner(const int i) const override { indent(i); std::cout << num << std::endl; } 
+
 };
 
 // Stmt
 struct Item : BaseAST {};
+
 struct Stmt : Item
 {
 };
 
+//value codegen of the last expr
 struct ExprList: Expr, Stmt {
 	std::vector<std::unique_ptr<Expr>> list;
 	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
+	ExprList()= default;
 	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
+	virtual llvm::Value *codegen() override;
+
 protected:
 	void dumpInner(const int i) const override {
 		for(auto &e : list) 
@@ -88,26 +109,33 @@ protected:
 	}
 };
 
+
+//value codegen of the var;
 struct Assign : Expr {
 	std::unique_ptr<Var> var;
 	std::unique_ptr<Expr> expr;
 	Assign(Var *v, Expr *e) : var(v), expr(e) {}
+	virtual llvm::Value *codegen() override;
+
 };
 
+//value codegen of the function
 struct Call : Expr {
 	std::unique_ptr<Symbol> name;
 	std::unique_ptr<ExprList> params;
 	Call(Symbol *n, ExprList *p) : name(n), params(p) {}
+	virtual llvm::Value *codegen() override;
+
 };
 
-
+//block
 struct If : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
 	If(Expr *e, Stmt *s) : expr(e), stmt(s) {}
 };
 
-
+//block
 struct IfElse : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> ts;
@@ -115,12 +143,15 @@ struct IfElse : Stmt {
 	IfElse(Expr *e, Stmt *t, Stmt *f) : expr(e), ts(t), fs(f) {}
 };
 
+//block
 struct While : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
 	While(Expr *e, Stmt *s) : expr(e), stmt(s) {}
 };
 
+
+//block
 struct For : Stmt {
 	std::unique_ptr<Expr> init;
 	std::unique_ptr<Expr> expr;
@@ -183,6 +214,7 @@ struct VarDef : BaseAST {
 	std::unique_ptr<Var> name;
 	VarDef(Var *n) : name(n) {}
 };
+
 using VarDefs = std::vector<std::unique_ptr<VarDef>>;
 
 struct InitVarDef : VarDef {
@@ -211,6 +243,7 @@ struct VarDecl : Decl {
 };
 
 // Fun
+// 
 struct FunDef : Unit
 {
 	std::unique_ptr<Type> type;
@@ -219,6 +252,7 @@ struct FunDef : Unit
 	std::unique_ptr<Block> block;
 	FunDef(Type *t, Symbol *n, FieldList *f, Block *b) : type(t), name(n), fields(f), block(b) {}
 	FunDef(Type *t, Symbol *n, Block *b) : type(t), name(n), fields(new FieldList()), block(b) {}
+	llvm::Function *codegen();
 protected:
 	void dumpInner(const int i) const override;
 };
@@ -233,3 +267,15 @@ struct CompUnit : BaseAST
 protected:
 	void dumpInner(const int i) const override;
 };
+
+template <typename T>
+inline llvm::Value *NumExpr<T>::codegen()
+{
+	if((*type) == "int"){
+		return 
+	}
+	else if((*type) == "float"){
+
+	}
+    return nullptr;
+}

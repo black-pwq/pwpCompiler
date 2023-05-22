@@ -26,9 +26,9 @@ void BaseAST::indent(const int i) const
 		std::cout << "  ";
 }
 
-llvm::Function *FunDef::codegen()
+void *FunDef::codegen()
 {
-	std::vector<Type*> field;
+	std::vector<llvm::Type*> field;
 	
 	for (int i = 0; i<(*fields).size(); ++i)
 	{
@@ -37,14 +37,36 @@ llvm::Function *FunDef::codegen()
 			field.push_back(llvm::Type::getInt32Ty(*TheContext));
 		} 
 		else if(*((*fields)[i]->type->name)=="float"){
-			
+			field.push_back(llvm::Type::getFloatTy(*TheContext));
 		} 
 	}
-    llvm::Type::getDoubleTy(getGlobalContext()));
-	llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getDoubleTy(getGlobalContext()),Doubles, false);
+	llvm::FunctionType *ft;
+	if(*(type->name) == "int"){
+		ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext),field,false);
+	}
+	else if(*(type->name) == "float"){
+		ft = llvm::FunctionType::get(llvm::Type::getFloatTy(*TheContext),field,false);
 
-  	llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name, TheModule.get());
-    return nullptr;
+	}
+	else if(*(type->name) == "string"){
+		// ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext),field,false);
+
+	}else if(*(type->name) == "void"){
+		ft = llvm::FunctionType::get(llvm::Type::getVoidTy(*TheContext),field,false);
+	}
+
+	// llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getDoubleTy(getGlobalContext()),Doubles, false);
+  	llvm::Function *F = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, *name, *TheModule);
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
+  	Builder->SetInsertPoint(BB);
+	llvm::ReturnInst::Create(*TheContext, llvm::ConstantInt::get(*TheContext,llvm::APSInt(32,false)), BB);
+
+    // Builder->CreateRet();
+    // Builder->CreateRet();
+
+    verifyFunction(*F);
+
+	// return F;
 }
 
 void FunDef::dumpInner(const int i) const
@@ -68,6 +90,16 @@ void Block::dumpInner(const int i) const
 		s->dump(i);
 }
 
+
+void CompUnit::codegen()
+{
+	for (int i = 0; i<units.size(); ++i)
+	{
+ 
+		units[i]->codegen();
+	}
+}
+
 void CompUnit::dumpInner(const int i) const
 {
 	for (auto &u : units)
@@ -85,7 +117,6 @@ void Type::dumpInner(const int i) const
 	indent(i);
 	cout << *name << endl;
 }
-
 llvm::Value *UniExpr::codegen()
 {
 
@@ -126,5 +157,26 @@ llvm::Value *BiExpr::codegen()
 		case bi_lt:
 			L = Builder->CreateFCmpULT(L, R, "cmptmp");
 	}
+    return nullptr;
+}
+
+void *Unit::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *Call::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *Expr::codegen()
+{
+
+    return nullptr;
+}
+
+llvm::Value *ExprList::codegen()
+{
     return nullptr;
 }

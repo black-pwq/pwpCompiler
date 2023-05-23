@@ -22,7 +22,7 @@ LineComment   "//".*
 
 /* 标识符 */
 Identifier    [a-zA-Z_][a-zA-Z0-9_]*
-AString       [a-zA-Z0-9!@#$+-]+
+AString       \"(\\.|[^\\"])*\"
 
 /* 整数字面量 */
 Decimal       [1-9][0-9]*
@@ -30,7 +30,7 @@ Octal         0[0-7]*
 Hexadecimal   0[xX][0-9a-fA-F]+
 
 /*float变量*/
-Float         [0-9]+\.[0-9]+
+Float         [0-9]*\.[0-9]+
 %%
 
 {WhiteSpace}    { /* 忽略, 不做任何操作 */ }
@@ -60,11 +60,11 @@ Float         [0-9]+\.[0-9]+
 
 
 {Identifier}    { yylval.str_val = new string(yytext); return IDENT; }
-{AString}       { yylval.str_val = new string(yytext); return SRTING; }
+{AString}       { yylval.str_val = new string(yytext); return STRING; }
 {Decimal}       { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
 {Octal}         { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
 {Hexadecimal}   { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
-{Float}         { yylval.float_val = strtol(yytext, nullptr, 0); return FLOAT_CONST;}
+{Float}         { yylval.float_val = atof(yytext); return FLOAT_CONST;}
 .               { return yytext[0]; }
 
 %%

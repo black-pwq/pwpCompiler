@@ -68,10 +68,53 @@ void FunDef::codegen()
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
   	Builder->SetInsertPoint(BB);
 	// llvm::ReturnInst::Create(*TheContext, llvm::ConstantInt::get(*TheContext,llvm::APSInt(32,false)), BB);
-	Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
 	// Builder->CreateRetVoid();
     // Builder->CreateRet();
-    // Builder->CreateRet();
+	// Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
+
+	//fff
+	llvm::AllocaInst *allocDeclrInt = Builder->CreateAlloca(llvm::IntegerType::get(TheModule->getContext(), 32), NULL, "a.addr");
+    allocDeclrInt->setAlignment(llvm::Align(4));
+
+
+
+	std::vector<llvm::Type *> putsArgs;
+    putsArgs.push_back(Builder->getInt8Ty()->getPointerTo());
+    llvm::ArrayRef<llvm::Type*>  argsRef(putsArgs);
+
+    llvm::FunctionType *putsType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef, true);
+    llvm::Function *putsFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction("printf", putsType).getCallee());
+
+
+	std::vector<llvm::Type *> inArgs;
+    inArgs.push_back(Builder->getInt8Ty()->getPointerTo());
+	
+    llvm::ArrayRef<llvm::Type*>  argsRef2(inArgs);
+
+    llvm::FunctionType *inType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef2, true);
+    llvm::Function *inFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction("scanf", inType).getCallee());
+	
+	std::vector<llvm::Value*> field1;
+	field1.push_back(Builder->CreateGlobalStringPtr("%d"));
+	field1.push_back(allocDeclrInt);
+    Builder->CreateCall(inFunc,field1);
+
+
+    //输出换行
+	std::vector<llvm::Value*> field2;
+	field2.push_back(Builder->CreateGlobalStringPtr("\n%f\n%d"));
+	field2.push_back(llvm::ConstantFP::get(llvm::Type::getFloatTy(*TheContext), llvm::APFloat(9.00)));
+
+
+
+	field2.push_back(Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),allocDeclrInt, "a.addr"));
+
+	// new llvm::LoadInst(, "", false, BB);
+		
+    Builder->CreateCall(putsFunc,field2);
+
+	Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
+	//ffff
 
     verifyFunction(*F);
 

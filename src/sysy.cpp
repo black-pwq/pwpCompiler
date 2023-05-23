@@ -30,6 +30,11 @@ int main(int argc, const char *argv[]) {
   ast->dump();
   initmodule();
   ast->codegen();
+  
+  
+
+
+
   // llvm::SmallVector<llvm::Type *, 1> FuncTyAgrs;
 
   // FuncTyAgrs.push_back(llvm::Type::getInt32Ty(*TheContext));
@@ -46,6 +51,9 @@ int main(int argc, const char *argv[]) {
   llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllAsmPrinters();
+
+
+
 
   std::string Error;
   auto Target = llvm::TargetRegistry::lookupTarget(TargetTriple, Error);

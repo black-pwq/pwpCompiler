@@ -6,6 +6,9 @@
 //   int k = 2+2;
 //   // return 1;  
 // }
+// float k(int r){
+//   return 1;
+// }
 
 int main() {
 

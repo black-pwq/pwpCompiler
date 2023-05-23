@@ -1,2 +1,1 @@
-make
-build/compiler code/mex.c
+make;build/compiler code/mex.c;riscv64-unknown-elf-gcc output.s -o test

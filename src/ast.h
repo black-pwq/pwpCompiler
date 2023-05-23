@@ -15,7 +15,7 @@ struct BaseAST
 	BaseAST() : lineno(yylineno) {}
 	virtual ~BaseAST() = default;
 	void dump(const int i = 0) const;
-
+	
 protected:
 	void indent(const int i) const;
 	virtual void dumpInner(const int i) const;
@@ -98,7 +98,7 @@ struct BiExpr : Expr
 	BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r) {}
 
 protected:
-	void dumpInner(const int i) const override;
+	// void dumpInner(const int i) const override;
 };
 
 struct StringExpr : Expr
@@ -311,7 +311,7 @@ protected:
 // Unit
 struct Unit : BaseAST
 {
-	virtual void *codegen();
+	virtual void codegen();
 };
 
 struct Decl : Unit, Item
@@ -336,7 +336,7 @@ struct FunDef : Unit
 	std::unique_ptr<Block> block;
 	FunDef(Type *t, Symbol *n, FieldList *f, Block *b) : type(t), name(n), fields(f), block(b) {}
 	FunDef(Type *t, Symbol *n, Block *b) : type(t), name(n), fields(new FieldList()), block(b) {}
-	void *codegen() override;
+	void codegen() override;
 
 protected:
 	void dumpInner(const int i) const override;

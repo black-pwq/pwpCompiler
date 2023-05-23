@@ -26,10 +26,12 @@ void BaseAST::indent(const int i) const
 		std::cout << "  ";
 }
 
-void *FunDef::codegen()
+void FunDef::codegen()
 {
-	std::vector<llvm::Type*> field;
+
 	
+	std::vector<llvm::Type*> field;
+	std::cout<<(*fields).size()<<std::endl;
 	for (int i = 0; i<(*fields).size(); ++i)
 	{
  
@@ -39,9 +41,11 @@ void *FunDef::codegen()
 		else if(*((*fields)[i]->type->name)=="float"){
 			field.push_back(llvm::Type::getFloatTy(*TheContext));
 		} 
+
 	}
 	llvm::FunctionType *ft;
 	if(*(type->name) == "int"){
+		std::cout<<"int func" <<std::endl;
 		ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext),field,false);
 	}
 	else if(*(type->name) == "float"){
@@ -54,13 +58,18 @@ void *FunDef::codegen()
 	}else if(*(type->name) == "void"){
 		ft = llvm::FunctionType::get(llvm::Type::getVoidTy(*TheContext),field,false);
 	}
+	else{
+		std::cout<<"fundef fault"<<std::endl;
+	}
+
 
 	// llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getDoubleTy(getGlobalContext()),Doubles, false);
-  	llvm::Function *F = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, *name, *TheModule);
+  	llvm::Function *F = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, *name, TheModule.get());
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
   	Builder->SetInsertPoint(BB);
-	llvm::ReturnInst::Create(*TheContext, llvm::ConstantInt::get(*TheContext,llvm::APSInt(32,false)), BB);
-
+	// llvm::ReturnInst::Create(*TheContext, llvm::ConstantInt::get(*TheContext,llvm::APSInt(32,false)), BB);
+	Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
+	// Builder->CreateRetVoid();
     // Builder->CreateRet();
     // Builder->CreateRet();
 
@@ -68,6 +77,13 @@ void *FunDef::codegen()
 
 	// return F;
 }
+
+void Unit::codegen()
+{
+	std::cout<<"Unit init" <<std::endl;
+    // return nullptr;
+}
+
 
 void FunDef::dumpInner(const int i) const
 {
@@ -93,7 +109,9 @@ void Block::dumpInner(const int i) const
 
 void CompUnit::codegen()
 {
-	for (int i = 0; i<units.size(); ++i)
+	// initmodule();
+	std::cout<<"compunit count " << units.size() <<std::endl;
+	for (int i = 0; i<units.size(); i++)
 	{
  
 		units[i]->codegen();
@@ -160,10 +178,6 @@ llvm::Value *BiExpr::codegen()
     return nullptr;
 }
 
-void *Unit::codegen()
-{
-    return nullptr;
-}
 
 llvm::Value *Call::codegen()
 {

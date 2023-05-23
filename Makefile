@@ -42,7 +42,7 @@ BUILD_DIR ?= $(TOP_DIR)/build
 CXXFLAGS += $(shell llvm-config --cxxflags )
 
 
-LDFLAGS +=  $(shell llvm-config --ldflags --system-libs --libs core)
+LDFLAGS +=  $(shell llvm-config --ldflags --system-libs --libs all)
 
 
 # Source files & target files

@@ -5,40 +5,80 @@
 #include <typeinfo>
 #include <cxxabi.h>
 #include "symbol.h"
-#include "llvm.h"
+#include "symtab.h"
+
 extern int yylineno;
 
-// no instance
+struct CompUnit;
+struct Type;
+
+struct Expr;
+struct UniExpr;
+struct BiExpr;
+struct Assign;
+struct Call;
+struct Var;
+struct SimpleVar;
+struct ArrayVar;
+
+struct Item;
+struct Stmt;
+struct ExprList;
+
+struct VarDef;
+struct InitVarDef;
+struct InitArrayDef;
+
+struct Unit;
+struct Decl;
+struct VarDecl;
+struct FunDef;
+
 struct BaseAST
 {
 	int lineno;
+	static int errid;
+	static SymTab varSt;
+	static SymTab funSt;
 	BaseAST() : lineno(yylineno) {}
 	virtual ~BaseAST() = default;
 	void dump(const int i = 0) const;
-	
+	virtual int typeCheck() const {return 0;}
+
 protected:
 	void indent(const int i) const;
 	virtual void dumpInner(const int i) const;
 };
 
-struct Var;
-
-// no codegen
-struct Type : BaseAST
+// CompUnit
+struct CompUnit : BaseAST
 {
-	std::unique_ptr<Symbol> name;
-	Type(Symbol *n) : name(n) {}
-
+	int lineno;
+	std::vector<std::unique_ptr<Unit>> units;
+	CompUnit() = default;
+	CompUnit(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
+	void append(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override;
 };
 
-// no codegen
+// Type
+struct Type : BaseAST {
+	const BType btype;
+	int dim = 0;
+	Type(BType b) : btype(b) {}
+	void addDim() {++dim;}
+protected:
+	void dumpInner(const int i) const override; 
+};
+
 struct Field : BaseAST
 {
 	std::unique_ptr<Type> type;
 	std::unique_ptr<Var> name;
 	Field(Type *t, Var *n) : type(t), name(n) {}
+	virtual int typeCheck() const override;
 
 protected:
 	void dumpInner(const int i) const override;
@@ -47,10 +87,13 @@ protected:
 using FieldList = std::vector<std::unique_ptr<Field>>;
 
 // Expr
-// Value codegen
-struct Expr : BaseAST
-{
-	virtual llvm::Value *codegen();
+struct Expr: BaseAST {
+	bool evaluable;
+	float num;
+	Expr() : evaluable(false), num(0) {}
+	Expr(float n) : evaluable(true), num(n) {}
+protected:
+	virtual void dumpInner(const int i) const override;
 };
 
 enum BiOp
@@ -80,8 +123,9 @@ struct UniExpr : Expr
 {
 	UniOp op;
 	std::unique_ptr<Expr> expr;
-	UniExpr(UniOp o, Expr *e) : op(o), expr(e) {}
-	virtual llvm::Value *codegen() override;
+	UniExpr(UniOp o, Expr *e); 
+protected:
+	virtual void dumpInner(const int i) const override;
 };
 
 // Value codegen
@@ -90,13 +134,10 @@ struct BiExpr : Expr
 	std::shared_ptr<Expr> left; // shared_ptr for binary assignment
 	BiOp op;
 	std::shared_ptr<Expr> right;
-	BiExpr(Expr *l, BiOp o, Expr *r) : left(l), op(o), right(r) {}
-	virtual llvm::Value *codegen() override;
-
-	BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) : left(l), op(o), right(r) {}
-	BiExpr(Expr *l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r) {}
-	BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r) {}
-
+	BiExpr(Expr *l, BiOp o, Expr *r) ;
+	BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) ;
+	BiExpr(Expr *l, BiOp o, std::shared_ptr<Expr> r);
+	BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) ;
 protected:
 	// void dumpInner(const int i) const override;
 };
@@ -105,22 +146,24 @@ struct StringExpr : Expr
 {
 	std::unique_ptr<std::string> str;
 	StringExpr(std::string *s) : str(s) {}
+protected:
+	virtual void dumpInner(const int i) const override;
 };
 
-// Value codegen
-template <typename T>
-struct NumExpr : Expr
-{
-	const T num;
-	NumExpr(const T n) : num(n) {}
-	virtual llvm::Value *codegen() override;
+struct ConstExpr : Expr {
+	ConstExpr(float n) : Expr(n) {}
+};
 
+struct IntExpr : ConstExpr {
+	IntExpr(const int i) : ConstExpr(i) {}
 protected:
-	void dumpInner(const int i) const override
-	{
-		indent(i);
-		std::cout << num << std::endl;
-	}
+	void dumpInner(const int i) const override ;
+};
+
+struct FloatExpr : ConstExpr {
+	FloatExpr(const float f) : ConstExpr(f) {}
+protected:
+	void dumpInner(const int i) const override ;
 };
 
 // Stmt
@@ -137,11 +180,13 @@ struct ExprList : Expr, Stmt
 {
 	std::vector<std::unique_ptr<Expr>> list;
 	ExprList() = default;
-	ExprList(Expr *e) { list.emplace_back(std::unique_ptr<Expr>(e)); }
-	// ExprList() = default;
-	void append(Expr *e) { list.emplace_back(std::unique_ptr<Expr>(e)); }
-	virtual llvm::Value *codegen() override;
+	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
+	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 
+	/**
+	 * Perform symbol lookup. Declarations are done by Decl class.
+	*/
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override
 	{
@@ -150,12 +195,11 @@ protected:
 	}
 };
 
-struct Call : Expr
-{
-	std::unique_ptr<Symbol> name;
+struct Call : Expr {
+	std::unique_ptr<std::string> name;
 	std::unique_ptr<ExprList> params;
-	Call(Symbol *n, ExprList *p) : name(n), params(p) {}
-	virtual llvm::Value *codegen() override;
+	Call(std::string *n, ExprList *p) : name(n), params(p) {}
+	virtual int typeCheck() const override;
 };
 
 // block
@@ -164,7 +208,7 @@ struct If : Stmt
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
 	If(Expr *e, Stmt *s) : expr(e), stmt(s) {}
-
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override
 	{
@@ -180,7 +224,7 @@ struct IfElse : Stmt
 	std::unique_ptr<Stmt> ts;
 	std::unique_ptr<Stmt> fs;
 	IfElse(Expr *e, Stmt *t, Stmt *f) : expr(e), ts(t), fs(f) {}
-
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override
 	{
@@ -196,6 +240,7 @@ struct While : Stmt
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
 	While(Expr *e, Stmt *s) : expr(e), stmt(s) {}
+	virtual int typeCheck() const override;
 };
 
 // block
@@ -206,6 +251,7 @@ struct For : Stmt
 	std::unique_ptr<Expr> tail;
 	std::unique_ptr<Stmt> body;
 	For(Expr *i, Expr *e, Expr *t, Stmt *b) : init(i), expr(e), tail(t), body(b) {}
+	virtual int typeCheck() const override;
 
 protected:
 	void dumpInner(const int i) const override
@@ -221,6 +267,7 @@ struct Return : Stmt
 {
 	std::unique_ptr<Expr> expr;
 	Return(Expr *e) : expr(e) {}
+	virtual int typeCheck() const override;
 
 protected:
 	void dumpInner(const int i) const override;
@@ -240,57 +287,71 @@ struct Block : Stmt
 	ItemList items;
 	Block() = default;
 	Block(Item *s) { append(s); }
-	void append(Item *s) { items.emplace_back(std::unique_ptr<Item>(s)); }
+	void append(Item *s) {items.emplace_back(std::unique_ptr<Item>(s));}
+	virtual int typeCheck() const override;
 
 protected:
 	void dumpInner(const int i) const override;
 };
 
 // Var
-struct Var : Expr
-{
-};
-
-struct SimpleVar : Var
-{
-	std::unique_ptr<Symbol> sym;
-	SimpleVar(Symbol *s) : sym(s) {}
-
+struct Var: Expr { 
+	std::unique_ptr<std::string> sym;
+	std::unique_ptr<ExprList> exprs;
+	Var(std::string *s, ExprList *e) : sym(s), exprs(e) {}
+	virtual int typeCheck() const = 0;
+	// virtual int sizeInWord() const = 0;
 protected:
-	void dumpInner(const int i) const override
-	{
-		indent(i);
-		std::cout << *sym << std::endl;
-	}
+	virtual void dumpInner(const int i) const override;
 };
 
-struct ArrayVar : Var
-{
-	std::unique_ptr<Var> var;
-	std::unique_ptr<Expr> expr;
-	ArrayVar(Var *v, Expr *e) : var(v), expr(e) {}
+struct SimpleVar: Var {
+	SimpleVar(std::string *s) : Var(s, new ExprList()) {}
+
+	/**
+	 * TypeCheck will not be called if it is in VarDef.
+	 * Here, we are looking for the symbol in the symTab.
+	*/
+	virtual int typeCheck() const override;
+	// virtual int sizeInWord() const {return 1;}
+	// dumpInner inherited from Var
+};
+
+struct ArrayVar: Var {
+	ArrayVar(std::string *v, ExprList *e) : Var(v, e) {}
+
+	/**
+	 * TypeCheck will not be called if it is in VarDef.
+	 * Here, we are looking for the symbol in the symTab.
+	*/
+	virtual int typeCheck() const override;
+	// virtual int sizeInWord() const override;
+protected:
+	virtual void dumpInner(const int i) const override;
 };
 
 struct VarDef : BaseAST
 {
 	std::unique_ptr<Var> name;
 	VarDef(Var *n) : name(n) {}
+	// No need to implement typeCheck here, since the type is not associcated in this class.
+	// We check and insert symbols in VarDecl
+protected:
+	virtual void dumpInner(const int i) const override;
 };
 
 using VarDefs = std::vector<std::unique_ptr<VarDef>>;
 
-struct InitVarDef : VarDef
-{
-	std::unique_ptr<Var> name;
+struct InitVarDef : VarDef {
 	std::unique_ptr<Expr> expr;
 	InitVarDef(Var *n, Expr *e) : VarDef(n), expr(e) {}
+	// typeCheck inherited from VarDef
 };
 
-struct InitArrayDef : VarDef
-{
-	std::unique_ptr<Var> name;
+struct InitArrayDef : VarDef {
 	std::unique_ptr<ExprList> exprs;
 	InitArrayDef(Var *n, ExprList *e) : VarDef(n), exprs(e) {}
+	// typeCheck inherited from VarDef
 };
 
 struct Assign : Expr
@@ -299,7 +360,7 @@ struct Assign : Expr
 	std::unique_ptr<Expr> expr;
 	Assign(Var *v, Expr *e) : var(v), expr(e) {}
 	Assign(std::shared_ptr<Var> v, Expr *e) : var(v), expr(e) {}
-
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override
 	{
@@ -323,7 +384,10 @@ struct VarDecl : Decl
 	std::unique_ptr<Type> type;
 	std::unique_ptr<VarDefs> vars;
 	VarDecl(Type *t, VarDefs *v) : type(t), vars(v) {}
-	void append(VarDef *v) { vars->emplace_back(std::unique_ptr<VarDef>(v)); }
+	void append(VarDef *v) {vars->emplace_back(std::unique_ptr<VarDef>(v));}
+	virtual int typeCheck() const override;
+protected:
+	virtual void dumpInner(const int i) const override;
 };
 
 // Fun
@@ -331,42 +395,13 @@ struct VarDecl : Decl
 struct FunDef : Unit
 {
 	std::unique_ptr<Type> type;
-	std::unique_ptr<Symbol> name;
+	std::unique_ptr<std::string> name;
 	std::unique_ptr<FieldList> fields;
 	std::unique_ptr<Block> block;
-	FunDef(Type *t, Symbol *n, FieldList *f, Block *b) : type(t), name(n), fields(f), block(b) {}
-	FunDef(Type *t, Symbol *n, Block *b) : type(t), name(n), fields(new FieldList()), block(b) {}
-	void codegen() override;
-
+	FunDef(Type *t, std::string *n, FieldList *f, Block *b) : type(t), name(n), fields(f), block(b) {}
+	FunDef(Type *t, std::string *n, Block *b) : type(t), name(n), fields(new FieldList()), block(b) {}
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override;
 };
 
-// CompUnit
-// codegen void
-
-struct CompUnit : BaseAST
-{
-	int lineno;
-	std::vector<std::unique_ptr<Unit>> units;
-	CompUnit() = default;
-	CompUnit(Unit *u) { units.emplace_back(std::unique_ptr<Unit>(u)); }
-	void append(Unit *u) { units.emplace_back(std::unique_ptr<Unit>(u)); }
-	void codegen();
-
-protected:
-	void dumpInner(const int i) const override;
-};
-
-template <typename T>
-inline llvm::Value *NumExpr<T>::codegen()
-{
-	// if ((T) == "int")
-	// {
-	// 	// return
-	// }
-	// else if ((*type) == "float")
-	// {
-	// }
-	return nullptr;
-}

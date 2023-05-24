@@ -11,10 +11,23 @@ using namespace std;
 extern FILE *yyin;
 extern int yyparse(unique_ptr<CompUnit> &ast);
 
+std::string errtab[] = {
+    "PASS",
+    "array size is not computable at compile time",
+    "array size is non-poisitive",
+    "already declared variable in the same scope",
+    "variable is not defined so far",
+    "variable (base) type mismatch with definition",
+    "array dimention mismath with definition",
+    "fun redefinition",
+    "fun definition not find",
+    "#arguments mismatch with the definition of function",
+    "no main fucntion",
+};
 
-int main(int argc, const char *argv[]) {
-  // InitializeModule();
-  
+int
+main(int argc, const char *argv[])
+{
   auto input = argv[1];
 
   // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
@@ -28,12 +41,18 @@ int main(int argc, const char *argv[]) {
   assert(!ret);
   
   ast->dump();
+
+  int res = ast->typeCheck();
+  auto varout = fopen("var.dump", "w");
+  auto funout = fopen("fun.dump", "w");
+  ast->varSt.dump(varout);
+  ast->funSt.dump(funout);
+  cout << "err lineno = " << res << endl;
+  cout << errtab[ast->errid] << endl;
+  
+
   initmodule();
   ast->codegen();
-  
-  
-
-
 
   // llvm::SmallVector<llvm::Type *, 1> FuncTyAgrs;
 
@@ -85,6 +104,7 @@ int main(int argc, const char *argv[]) {
   }
   pass.run(*TheModule);
   dest.flush();
+
 
   return 0;
 }

@@ -35,3 +35,5 @@ extern std::unique_ptr<llvm::IRBuilder<>> Builder;
 // static std::map<std::string, llvm::Value *> NamedValues;
 
 void initmodule();
+
+void initiostream();

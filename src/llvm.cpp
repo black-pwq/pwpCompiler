@@ -15,3 +15,8 @@ void initmodule()
   Builder = std::make_unique<llvm::IRBuilder<>>(*TheContext);
   std::cout<<"init fin________"<<std::endl;
 }
+
+void initiostream()
+{
+  
+}

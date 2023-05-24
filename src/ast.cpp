@@ -72,11 +72,9 @@ void FunDef::codegen()
     // Builder->CreateRet();
 	// Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
 
-	//fff
-	llvm::AllocaInst *allocDeclrInt = Builder->CreateAlloca(llvm::IntegerType::get(TheModule->getContext(), 32), NULL, "a.addr");
+	//io
+	llvm::AllocaInst *allocDeclrInt = Builder->CreateAlloca(llvm::IntegerType::getInt32Ty(*TheContext), NULL, "a.addr");
     allocDeclrInt->setAlignment(llvm::Align(4));
-
-
 
 	std::vector<llvm::Type *> putsArgs;
     putsArgs.push_back(Builder->getInt8Ty()->getPointerTo());
@@ -90,7 +88,7 @@ void FunDef::codegen()
     inArgs.push_back(Builder->getInt8Ty()->getPointerTo());
 	
     llvm::ArrayRef<llvm::Type*>  argsRef2(inArgs);
-
+	//scanf def
     llvm::FunctionType *inType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef2, true);
     llvm::Function *inFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction("scanf", inType).getCallee());
 	
@@ -100,21 +98,84 @@ void FunDef::codegen()
     Builder->CreateCall(inFunc,field1);
 
 
-    //输出换行
 	std::vector<llvm::Value*> field2;
-	field2.push_back(Builder->CreateGlobalStringPtr("\n%f\n%d"));
-	field2.push_back(llvm::ConstantFP::get(llvm::Type::getFloatTy(*TheContext), llvm::APFloat(9.00)));
 
-
-
+	field2.push_back(Builder->CreateGlobalStringPtr("\n%d"));
+	// field2.push_back(llvm::ConstantFP::get(llvm::Type::getFloatTy(*TheContext), llvm::APFloat(9.00)));
 	field2.push_back(Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),allocDeclrInt, "a.addr"));
 
 	// new llvm::LoadInst(, "", false, BB);
 		
     Builder->CreateCall(putsFunc,field2);
 
+	//io
+
+
+	//arraytest
+
+    // Builder->CreateStore(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0), allocDeclrInt);
+
+	// llvm::Value *tem = Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),allocDeclrInt, "a.addr");
+	
+	llvm::ArrayType* arrayType = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),100);
+	llvm::Value* array = Builder->CreateAlloca(arrayType );
+
+	// Builder->CreateStore(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0), Builder->CreateConstGEP(array,4));
+	llvm::Value* i_allo = Builder->CreateAlloca(llvm::Type::getInt32Ty(*TheContext));
+	Builder->CreateStore(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0), i_allo);
+	//for 
+
+
+
+	llvm::BasicBlock* for_cont = llvm::BasicBlock::Create(*TheContext, "for.cond", F);
+	llvm::BasicBlock* for_body = llvm::BasicBlock::Create(*TheContext, "for.body", F);
+	llvm::BasicBlock* for_end = llvm::BasicBlock::Create(*TheContext, "for.end", F);
+	Builder->CreateBr(for_cont);
+	
+	//for_cont基本块
+	// Builder->SetInsertPoint(for_cont);
+	std::cout<<allocDeclrInt->getType() << "  " << llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 5)->getType()<< std::endl;
+	// std::cout<<(allocDeclrInt->getType()) << "  " << (llvm::cast<llvm::IntegerType>(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 4))).getType()<< std::endl;
+
+	// llvm::Value* i_load = Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),allocDeclrInt);
+	llvm::Value* i_load = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0);
+	llvm::Value* icmp = Builder->CreateICmpSLT(icmp, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 5));
+	Builder->CreateCondBr(icmp, for_body, for_end);
+	
+	//for_body基本块
+	Builder->SetInsertPoint(for_body);
+	std::vector<llvm::Value*> Idxs;
+	Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
+	Idxs.push_back(i_load);
+
+	llvm::Value* array_i = Builder->CreateGEP(arrayType,array, Idxs);//使用gep指令获取元素地址的指令的方式有好几个，最好都掌握
+	
+	//get each i using io
+
+	std::vector<llvm::Value*> field3;
+	field3.push_back(Builder->CreateGlobalStringPtr("%d"));
+	field3.push_back(i_allo);
+    Builder->CreateCall(inFunc,field3);
+
+	std::vector<llvm::Value*> field4;
+	field4.push_back(Builder->CreateGlobalStringPtr("\n%d"));
+	field4.push_back(Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),i_allo, "a.addr"));
+    Builder->CreateCall(putsFunc,field4);
+	//get each i using io
+
+
+	llvm::Value* i_add = Builder->CreateAdd(i_load, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 1));
+	Builder->CreateStore(i_add, i_allo);
+	Builder->CreateBr(for_cont);
+	
+	//for_end基本块，注意这里的返回值不能直接使用for_body中的sum，而是要用load指令再取一次
+	Builder->SetInsertPoint(for_end);
+	//for 
+
+	//arraytest
 	Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
-	//ffff
+
+
 
     verifyFunction(*F);
 

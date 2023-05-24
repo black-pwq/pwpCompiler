@@ -86,7 +86,7 @@ struct ArraySymbol : VarSymbol
 		fprintf(f, "%s", tn[type]);
 		for (int l : wordsInDim)
 			fprintf(f, "[%d]", l);
-		fprintf(f, ", sizeInWord = %d, size = %d", sizeInWord, getSize());
+		fprintf(f, ", sizeInWord = %d, size = %d ", sizeInWord, getSize());
 	}
 	virtual void append(const int w) override
 	{
@@ -112,8 +112,10 @@ struct FunSymbol : Symbol
 	{
 		char tn[][6] = {"undef", "int", "float", "void"};
 		fprintf(f, "returnType = %s ", tn[type]);
+		int i = 0;
 		for (auto t : types)
 		{
+			fprintf(f, "{%d}", ++i);
 			t->dump(f);
 		}
 	}

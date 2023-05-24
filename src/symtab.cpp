@@ -26,7 +26,7 @@ void SymScope::dump(FILE *f, int nest_level)
 	// from the head down through all the childrens
 	for (int i = 0; i < nest_level; i++)
 		fprintf(f, "\t");
-	fprintf(f, "+-- Symbol Scope ---\n");
+	fprintf(f, "+-- Symbol Scope %d ---\n", scopeSize);
 
 	for (auto &si : scopeTable)
 	{

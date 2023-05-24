@@ -6,7 +6,7 @@
 #include <cxxabi.h>
 #include "symbol.h"
 #include "symtab.h"
-
+#include "llvm.h"
 extern int yylineno;
 
 struct CompUnit;
@@ -59,8 +59,9 @@ struct CompUnit : BaseAST
 	CompUnit(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
 	void append(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
 	virtual int typeCheck() const override;
+    void codegen();
 protected:
-	void dumpInner(const int i) const override;
+    void dumpInner(const int i) const override;
 };
 
 // Type
@@ -92,8 +93,10 @@ struct Expr: BaseAST {
 	float num;
 	Expr() : evaluable(false), num(0) {}
 	Expr(float n) : evaluable(true), num(n) {}
+	llvm::Value *codegen();
 protected:
 	virtual void dumpInner(const int i) const override;
+    
 };
 
 enum BiOp
@@ -124,6 +127,7 @@ struct UniExpr : Expr
 	UniOp op;
 	std::unique_ptr<Expr> expr;
 	UniExpr(UniOp o, Expr *e); 
+    llvm::Value *codegen();
 protected:
 	virtual void dumpInner(const int i) const override;
 };
@@ -138,8 +142,12 @@ struct BiExpr : Expr
 	BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) ;
 	BiExpr(Expr *l, BiOp o, std::shared_ptr<Expr> r);
 	BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) ;
+    llvm::Value *codegen();
+
+    void dumpInner(const int i) const;
+
 protected:
-	// void dumpInner(const int i) const override;
+    // void dumpInner(const int i) const override;
 };
 
 struct StringExpr : Expr
@@ -187,8 +195,10 @@ struct ExprList : Expr, Stmt
 	 * Perform symbol lookup. Declarations are done by Decl class.
 	*/
 	virtual int typeCheck() const override;
+    llvm::Value *codegen();
+
 protected:
-	void dumpInner(const int i) const override
+    void dumpInner(const int i) const override
 	{
 		for (auto &e : list)
 			e->dump(i);
@@ -200,6 +210,7 @@ struct Call : Expr {
 	std::unique_ptr<ExprList> params;
 	Call(std::string *n, ExprList *p) : name(n), params(p) {}
 	virtual int typeCheck() const override;
+    llvm::Value *codegen();
 };
 
 // block
@@ -400,8 +411,9 @@ struct FunDef : Unit
 	std::unique_ptr<Block> block;
 	FunDef(Type *t, std::string *n, FieldList *f, Block *b) : type(t), name(n), fields(f), block(b) {}
 	FunDef(Type *t, std::string *n, Block *b) : type(t), name(n), fields(new FieldList()), block(b) {}
+    void codegen();
 	virtual int typeCheck() const override;
 protected:
-	void dumpInner(const int i) const override;
+    void dumpInner(const int i) const override;
 };
 

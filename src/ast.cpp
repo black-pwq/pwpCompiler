@@ -311,103 +311,71 @@ void BaseAST::indent(const int i) const
 void FunDef::codegen()
 {
 
-	
 	std::vector<llvm::Type*> field;
 	std::cout<<(*fields).size()<<std::endl;
 	for (int i = 0; i<(*fields).size(); ++i)
 	{
  
-		if(*((*fields)[i]->type->name)=="int"){
+		if(((*fields)[i]->type->btype)==bt_int){
 			field.push_back(llvm::Type::getInt32Ty(*TheContext));
 		} 
-		else if(*((*fields)[i]->type->name)=="float"){
+		else if(((*fields)[i]->type->btype)==bt_float){
 			field.push_back(llvm::Type::getFloatTy(*TheContext));
 		} 
 
 	}
 	llvm::FunctionType *ft;
-	if(*(type->name) == "int"){
+	if((type->btype) == bt_int){
 		std::cout<<"int func" <<std::endl;
 		ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext),field,false);
 	}
-	else if(*(type->name) == "float"){
+	else if((type->btype) == bt_float){
 		ft = llvm::FunctionType::get(llvm::Type::getFloatTy(*TheContext),field,false);
 
 	}
-	else if(*(type->name) == "string"){
+	else if((type->btype) == bt_char){
 		// ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext),field,false);
 
-	}else if(*(type->name) == "void"){
+	}else if((type->btype) == bt_void){
 		ft = llvm::FunctionType::get(llvm::Type::getVoidTy(*TheContext),field,false);
 	}
 	else{
 		std::cout<<"fundef fault"<<std::endl;
 	}
 
-
 	// llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getDoubleTy(getGlobalContext()),Doubles, false);
   	llvm::Function *F = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, *name, TheModule.get());
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
   	Builder->SetInsertPoint(BB);
-	// llvm::ReturnInst::Create(*TheContext, llvm::ConstantInt::get(*TheContext,llvm::APSInt(32,false)), BB);
-	// Builder->CreateRetVoid();
-    // Builder->CreateRet();
-	// Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
 
 	//io
 	llvm::AllocaInst *allocDeclrInt = Builder->CreateAlloca(llvm::IntegerType::getInt32Ty(*TheContext), NULL, "a.addr");
-    allocDeclrInt->setAlignment(llvm::Align(4));
-
 	std::vector<llvm::Type *> putsArgs;
     putsArgs.push_back(Builder->getInt8Ty()->getPointerTo());
     llvm::ArrayRef<llvm::Type*>  argsRef(putsArgs);
-
     llvm::FunctionType *putsType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef, true);
     llvm::Function *putsFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction("printf", putsType).getCallee());
 
 
 	std::vector<llvm::Type *> inArgs;
     inArgs.push_back(Builder->getInt8Ty()->getPointerTo());
-	
     llvm::ArrayRef<llvm::Type*>  argsRef2(inArgs);
 	//scanf def
     llvm::FunctionType *inType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef2, true);
     llvm::Function *inFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction("scanf", inType).getCallee());
+	
 	
 	std::vector<llvm::Value*> field1;
 	field1.push_back(Builder->CreateGlobalStringPtr("%d"));
 	field1.push_back(allocDeclrInt);
     Builder->CreateCall(inFunc,field1);
 
-
-	std::vector<llvm::Value*> field2;
-
-	field2.push_back(Builder->CreateGlobalStringPtr("\n%d"));
-	// field2.push_back(llvm::ConstantFP::get(llvm::Type::getFloatTy(*TheContext), llvm::APFloat(9.00)));
-	field2.push_back(Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),allocDeclrInt, "a.addr"));
-
-	// new llvm::LoadInst(, "", false, BB);
-		
-    Builder->CreateCall(putsFunc,field2);
-
-	//io
-
-
-	//arraytest
-
-    // Builder->CreateStore(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0), allocDeclrInt);
-
-	// llvm::Value *tem = Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),allocDeclrInt, "a.addr");
-	
 	llvm::ArrayType* arrayType = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),100);
 	llvm::Value* array = Builder->CreateAlloca(arrayType );
 
-	// Builder->CreateStore(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0), Builder->CreateConstGEP(array,4));
-	llvm::Value* i_allo = Builder->CreateAlloca(llvm::Type::getInt32Ty(*TheContext));
-	Builder->CreateStore(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0), i_allo);
-	//for 
-
-
+	llvm::Value* i_load = Builder->CreateAlloca(llvm::IntegerType::getInt32Ty(*TheContext), NULL, "i_load");
+	Builder->CreateStore(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0), i_load);
+	
 
 	llvm::BasicBlock* for_cont = llvm::BasicBlock::Create(*TheContext, "for.cond", F);
 	llvm::BasicBlock* for_body = llvm::BasicBlock::Create(*TheContext, "for.body", F);
@@ -415,54 +383,45 @@ void FunDef::codegen()
 	Builder->CreateBr(for_cont);
 	
 	//for_cont基本块
-	// Builder->SetInsertPoint(for_cont);
-	std::cout<<allocDeclrInt->getType() << "  " << llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 5)->getType()<< std::endl;
-	// std::cout<<(allocDeclrInt->getType()) << "  " << (llvm::cast<llvm::IntegerType>(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 4))).getType()<< std::endl;
-
-	// llvm::Value* i_load = Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),allocDeclrInt);
-	llvm::Value* i_load = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0);
-	llvm::Value* icmp = Builder->CreateICmpSLT(icmp, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 5));
+	Builder->SetInsertPoint(for_cont);
+	llvm::Value *cmpitmp = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),i_load,"cmpitmp");
+	llvm::Value *cmpitmp2 = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),allocDeclrInt,"cmpitmp2");
+	llvm::Value* icmp = Builder->CreateICmpSLT(cmpitmp, cmpitmp2,"cmptmp");
 	Builder->CreateCondBr(icmp, for_body, for_end);
 	
 	//for_body基本块
 	Builder->SetInsertPoint(for_body);
 	std::vector<llvm::Value*> Idxs;
-	Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
-	Idxs.push_back(i_load);
-
-	llvm::Value* array_i = Builder->CreateGEP(arrayType,array, Idxs);//使用gep指令获取元素地址的指令的方式有好几个，最好都掌握
+	llvm::Value *itmp1 = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),i_load,"itmpinbody");
 	
-	//get each i using io
+	Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
+	Idxs.push_back(itmp1);
+	llvm::Value* array_i = Builder->CreateGEP(arrayType,array, Idxs,"array_i");
 
 	std::vector<llvm::Value*> field3;
 	field3.push_back(Builder->CreateGlobalStringPtr("%d"));
-	field3.push_back(i_allo);
+	field3.push_back(array_i);
     Builder->CreateCall(inFunc,field3);
 
 	std::vector<llvm::Value*> field4;
-	field4.push_back(Builder->CreateGlobalStringPtr("\n%d"));
-	field4.push_back(Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),i_allo, "a.addr"));
+	field4.push_back(Builder->CreateGlobalStringPtr("%d\n"));
+	field4.push_back(Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),array_i));
+	auto puts = TheModule->getOrInsertFunction("printf",);
     Builder->CreateCall(putsFunc,field4);
 	//get each i using io
 
-
-	llvm::Value* i_add = Builder->CreateAdd(i_load, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 1));
-	Builder->CreateStore(i_add, i_allo);
+	llvm::Value *itmp = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),i_load,"itmp");
+	llvm::Value* i_add = Builder->CreateAdd(itmp, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 1));
+	Builder->CreateStore(i_add, i_load);
 	Builder->CreateBr(for_cont);
 	
-	//for_end基本块，注意这里的返回值不能直接使用for_body中的sum，而是要用load指令再取一次
 	Builder->SetInsertPoint(for_end);
-	//for 
-
-	//arraytest
 	Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
 
 
-
     verifyFunction(*F);
-
-	// return F;
 }
+
 
 void Unit::codegen()
 {
@@ -471,11 +430,6 @@ void Unit::codegen()
 }
 
 
-void CompUnit::dumpInner(const int i) const
-{
-	for (auto &u : units)
-		u->dump(i);
-}
 
 void FunDef::dumpInner(const int i) const
 {
@@ -566,6 +520,7 @@ void UniExpr::dumpInner(const int i) const
 	cout << n[op] << endl;
 	expr->dump(i);
 }
+
 llvm::Value *UniExpr::codegen()
 {
 
@@ -623,7 +578,12 @@ llvm::Value *Expr::codegen()
 
 llvm::Value *ExprList::codegen()
 {
-    return nullptr;
+	return nullptr;
+}
+
+void BiExpr::dumpInner(const int i) const
+{
+    
 	Expr::dumpInner(i);
 	const std::string opNames[] = {"+", "-", "*", "/", "&&", "||", "==", "!=", "<", "<=", ">", ">="};
 	left->dump(i);
@@ -631,6 +591,7 @@ llvm::Value *ExprList::codegen()
 	std::cout << opNames[op] << std::endl;
 	right->dump(i);
 }
+
 
 void StringExpr::dumpInner(const int i) const
 {
@@ -652,6 +613,7 @@ void FloatExpr::dumpInner(const int i) const
 	indent(i);
 	cout << num << endl;
 }
+
 void Type::dumpInner(const int i) const
 {
 	const std::string t[] = {"undef", "int", "float", "void"};

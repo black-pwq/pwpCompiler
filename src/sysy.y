@@ -62,7 +62,7 @@ using namespace std;
 %type <var_val> Var
 %type <var_decl_val> VarDecl
 %type <decl_val> Decl
-%type <exprlist_val> ExprList ArrayInitVal FunRP
+%type <exprlist_val> ExprList ArrayInitVal FunRP SquareExprList
 %type <fieldlist_val> FunFP
 
 %%
@@ -84,8 +84,8 @@ VarDecl
   ;
 
 BType
-  : INT   {$$ = new Type(new string("int"));}
-  | FLOAT {$$ = new Type(new string("float"));}
+  : INT   {$$ = new Type(BType::bt_int);}
+  | FLOAT {$$ = new Type(BType::bt_float);}
   ;
 
 VarDef
@@ -111,14 +111,19 @@ ExprList
   | ExprList ',' Expr      {$1->append($3); $$ = $1;}
   ;
 
+SquareExprList
+  : '[' Expr ']'                {$$ = new ExprList($2);}
+  | SquareExprList '[' Expr ']' {$1->append($3); $$ = $1;}
+  ;
+
 Var 
-  : IDENT               {$$ = new SimpleVar($1);}
-  | Var '[' E ']'       {$$ = new ArrayVar($1, $3);} 
+  : IDENT                     {$$ = new SimpleVar($1);}
+  | IDENT SquareExprList      {$$ = new ArrayVar($1, $2);} 
   ;
 
 F
-	: INT_CONST   {$$ = new NumExpr<int>($1);}
-  | FLOAT_CONST {$$ = new NumExpr<float>($1);}
+	: INT_CONST   {$$ = new IntExpr($1);}
+  | FLOAT_CONST {$$ = new FloatExpr($1);}
   | IDENT '(' FunRP ')'  {$$ = new Call($1, $3);}
   | Var                     {$$ = $1;}
 	| '(' Expr ')'		        {$$ = $2;}
@@ -179,7 +184,7 @@ Expr
 
 FunDef
   : BType IDENT '(' FunFP ')' Block {$$ = new FunDef($1, $2, $4, $6);}
-  | VOID IDENT '(' FunFP ')' Block  {$$ = new FunDef(new Type(new string("void")), $2, $4, $6);}
+  | VOID IDENT '(' FunFP ')' Block  {$$ = new FunDef(new Type(BType::bt_void), $2, $4, $6);}
   ;
 
 FunFP

@@ -406,7 +406,6 @@ void FunDef::codegen()
 	std::vector<llvm::Value*> field4;
 	field4.push_back(Builder->CreateGlobalStringPtr("%d\n"));
 	field4.push_back(Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),array_i));
-	auto puts = TheModule->getOrInsertFunction("printf",);
     Builder->CreateCall(putsFunc,field4);
 	//get each i using io
 

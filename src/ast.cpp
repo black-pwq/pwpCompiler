@@ -1,9 +1,6 @@
 #include "ast.h"
 using namespace std;
 
-int BaseAST::errid;
-SymTab BaseAST::varSt;
-SymTab BaseAST::funSt;
 int Expr::t;
 
 static float eval_bi(int l, BiOp op, int r)
@@ -226,4 +223,9 @@ void InitVarDef::dumpInner(const int i) const
 {
 	var->dump(i);
 	expr->dump(i);
+}
+void Call::dumpInner(const int i) const {
+	indent(i);
+	cout << *name << endl;
+	params->Expr::dump(i);
 }

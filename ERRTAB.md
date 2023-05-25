@@ -16,3 +16,4 @@
 16. array access out of dimension
 17. parameter (base) type mismatch
 18. parameter (compound) type mismatch
+19. binary operations on offset of pointers are not allowed except add/sub

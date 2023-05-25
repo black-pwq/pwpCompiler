@@ -1,7 +1,5 @@
 int main() {
-	int i,j,x,y;
-	i += 1;
-	j -= 2;
-	x *= 3;
-	y *= x;
+	int i, j;
+	int a[10];
+	i *= j;
 }

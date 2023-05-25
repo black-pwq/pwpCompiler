@@ -37,9 +37,6 @@ struct FunDef;
 struct BaseAST
 {
 	int lineno;
-	static int errid;
-	static SymTab varSt;
-	static SymTab funSt;
 	BaseAST() : lineno(yylineno) {}
 	virtual ~BaseAST() = default;
 	void dump(const int i = 0) const;
@@ -53,7 +50,6 @@ protected:
 // CompUnit
 struct CompUnit : BaseAST
 {
-	int lineno;
 	std::vector<std::unique_ptr<Unit>> units;
 	CompUnit() = default;
 	CompUnit(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
@@ -88,14 +84,15 @@ using FieldList = std::vector<std::unique_ptr<Field>>;
 struct Expr: BaseAST {
 	bool evaluable;
 	float num;
-	Expr() : evaluable(false), num(0) {it = t++;}
-	Expr(float n) : evaluable(true), num(n) {it = t++;}
-	virtual std::string tmpName() const {return std::string("!e") + std::to_string(it);}
+	Expr() : Expr(0) {}
+	Expr(float n) : evaluable(true), num(n), it(t++), tn(std::string("!e") + std::to_string(it))  {}
+	virtual const std::string &tmpName() const {return tn;}
 protected:
 	virtual void dumpInner(const int i) const override;
 private:
 	static int t;
 	int it;
+	const std::string tn;
 };
 
 enum BiOp {bi_add, bi_sub, bi_times, bi_divide, bi_and, bi_or, bi_eq, bi_neq, bi_lt, bi_le, bi_gt, bi_ge};
@@ -176,6 +173,8 @@ struct Call : Expr {
 	std::unique_ptr<ExprList> params;
 	Call(std::string *n, ExprList *p) : name(n), params(p) {}
 	virtual int typeCheck() const override;
+protected:
+	void dumpInner(const int i) const override; 
 };
 
 

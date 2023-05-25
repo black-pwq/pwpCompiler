@@ -84,7 +84,7 @@ using FieldList = std::vector<std::unique_ptr<Field>>;
 struct Expr: BaseAST {
 	bool evaluable;
 	float num;
-	Expr() : Expr(0) {}
+	Expr() : evaluable(false), it(t++), tn(std::string("!e") + std::to_string(it))  {}
 	Expr(float n) : evaluable(true), num(n), it(t++), tn(std::string("!e") + std::to_string(it))  {}
 	virtual const std::string &tmpName() const {return tn;}
 protected:

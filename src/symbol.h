@@ -43,6 +43,7 @@ struct VarSymbol : Symbol
 struct SimpleSymbol : VarSymbol
 {
 	SimpleSymbol(BType t);
+	SimpleSymbol(VarSymbol *other);
 	virtual int getSize() const override;
 	virtual void dump(FILE *f) const override;
 	virtual void append(const int w) override;
@@ -51,8 +52,8 @@ struct SimpleSymbol : VarSymbol
 struct ArraySymbol : VarSymbol
 {
 	ArraySymbol(BType b);
-	ArraySymbol(ArraySymbol &other);
-	ArraySymbol(ArraySymbol *other);
+	ArraySymbol(VarSymbol &other);
+	ArraySymbol(VarSymbol *other);
 	virtual int getSize() const override;
 	virtual void dump(FILE *f) const override;
 	virtual void append(const int w) override;

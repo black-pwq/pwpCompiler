@@ -9,8 +9,10 @@
 using namespace std;
 
 extern FILE *yyin;
+extern int errid;
+extern SymTab varSt;
+extern SymTab funSt;
 extern int yyparse(unique_ptr<CompUnit> &ast);
-extern SymTab tmpSt;
 
 std::string errtab[] = {
     "PASS",
@@ -32,6 +34,7 @@ std::string errtab[] = {
     "array access out of dimension",
     "parameter (base) type mismatch",
     "parameter (compound) type mismatch",
+    "binary operations on offset of pointers are not allowed except add/sub",
 };
 
 int main(int argc, const char *argv[])
@@ -47,17 +50,15 @@ int main(int argc, const char *argv[])
 
   
   assert(!ret);
-  
   ast->dump();
-
   int res = ast->typeCheck();
   auto varout = fopen("var.dump", "w");
   auto funout = fopen("fun.dump", "w");
-  ast->varSt.dump(varout);
-  ast->funSt.dump(funout);
-  cout << "err lineno = " << res << endl;
-  cout << errtab[ast->errid] << endl;
-  
+  varSt.dump(varout);
+  funSt.dump(funout);
+  if (res)
+    cout << "err lineno = " << res << endl;
+  cout << errtab[errid] << endl;
 
   initmodule();
   ast->unitcodegen();

@@ -8,6 +8,7 @@ SimpleSymbol::SimpleSymbol(BType t) : VarSymbol(t)
 	assert(type != bt_undef);
 	assert(type != bt_void);
 }
+SimpleSymbol::SimpleSymbol(VarSymbol *other) : SimpleSymbol(other->type) {}
 int SimpleSymbol::getSize() const
 {
 	return BTypeSize[type];
@@ -27,12 +28,12 @@ ArraySymbol::ArraySymbol(BType b) : VarSymbol(b), sizeInWord(1)
 	assert(b != bt_void);
 }
 
-ArraySymbol::ArraySymbol(ArraySymbol &other) : ArraySymbol(other.type) {
+ArraySymbol::ArraySymbol(VarSymbol &other) : ArraySymbol(other.type) {
 	for(auto e : other.wordsInDim)
 		append(e);
 }
 
-ArraySymbol::ArraySymbol(ArraySymbol *other) : ArraySymbol(other->type) {
+ArraySymbol::ArraySymbol(VarSymbol *other) : ArraySymbol(other->type) {
 	for(auto e : other->wordsInDim)
 		append(e);
 }

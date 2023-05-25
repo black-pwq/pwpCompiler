@@ -1,11 +1,33 @@
 #include "ast.h"
 using namespace std;
 
+int errid;
+SymTab varSt;
+SymTab funSt;
+
 static bool is_arith_type(BType t)
 {
 	if (t == BType::bt_int || t == BType::bt_float)
 		return true;
 	return false;
+}
+static int check_var_expr_base_type(const VarSymbol *vs, const VarSymbol *es)
+{
+	// mix of int and float is allowed
+	if (is_arith_type(vs->type) && is_arith_type(es->type))
+		return 0;
+	// branch for other types
+	return errid = 13;
+}
+static int check_var_expr_type(const VarSymbol *vs, const VarSymbol *es)
+{
+	assert(vs);
+	assert(es);
+	if ((errid = check_var_expr_base_type(vs, es)))
+		return errid;
+	else if (vs->wordsInDim.size() != es->wordsInDim.size())
+		return errid = 14;
+	return 0;
 }
 
 /**
@@ -20,16 +42,9 @@ int InitVarDef::typeCheck() const
 	if (errline)
 		return errline;
 	VarSymbol *e = static_cast<VarSymbol *>(varSt.lookup(expr->tmpName()));
-	assert(v);
-	assert(e);
-	// match base type
 
-	if (is_arith_type(v->type) && !is_arith_type(e->type))
-		return errid = 13, expr->lineno;
-	else if (is_arith_type(v->type))
-		return 0;
-	else
-		assert(false);
+	if ((errid = check_var_expr_type(v, e)))
+		return lineno;
 	return 0;
 }
 
@@ -69,71 +84,67 @@ int BiExpr::typeCheck() const
 		BType rt = rs->type;
 		if (op >= BiOp::bi_add && op <= BiOp::bi_divide)
 		{
+			// neither of them is int or float (arith type)
 			if (!is_arith_type(lt) || !is_arith_type(rt))
 				return errid = 12, left->lineno;
+			// one of them is float
 			else if (lt == BType::bt_float || rt == BType::bt_float)
 			{
 				VarSymbol *n = new SimpleSymbol(BType::bt_float);
-				auto r = varSt.insert(tmpName(), n);
-				assert(r == n);
+				assert(varSt.insert(tmpName(), n) == n); // == n
 				return 0;
 			}
+			// both are int
 			else if (lt == BType::bt_int && rt == BType::bt_int)
 			{
 				VarSymbol *n = new SimpleSymbol(BType::bt_int);
-				auto r = varSt.insert(tmpName(), n);
-				assert(r == n);
+				assert(varSt.insert(tmpName(), n) == n); // == n
 				return 0;
 			}
 			else
-			{
 				assert(false);
-				return 0;
-			}
 		}
+		// comprasion
 		else if (op >= BiOp::bi_eq && op <= BiOp::bi_ge)
 		{
 			if (is_arith_type(lt) && is_arith_type(rt))
 			{
 				VarSymbol *n = new SimpleSymbol(BType::bt_bool);
-				auto r = varSt.insert(tmpName(), n);
-				assert(r == n);
+				assert(varSt.insert(tmpName(), n) == n); // == n
 				return 0;
 			}
 			else
 				return errid = 12, left->lineno;
 		}
+		// logic
 		else if (op == BiOp::bi_and || op == BiOp::bi_or)
 		{
 			if (lt == BType::bt_bool && rt == BType::bt_bool)
 			{
 				VarSymbol *n = new SimpleSymbol(BType::bt_bool);
-				auto r = varSt.insert(tmpName(), n);
-				assert(r == n);
+				assert(varSt.insert(tmpName(), n) == n); // == n
 				return 0;
 			}
 			else
 				return errid = 11, left->lineno;
 		}
 		else
-		{
 			assert(false);
-		}
 	}
 	// both are compound type
 	else if (ls->wordsInDim.size() != 0 && rs->wordsInDim.size() != 0)
-	{
 		return errid = 15, left->lineno;
-	}
-	// poiner arithmetic
+	// poiner add/sub offset
 	else
 	{
+		if (op != BiOp::bi_add && op != BiOp::bi_sub)
+			return errid = 19, left->lineno;
 		auto s = ls->wordsInDim.size() != 0 ? ls : rs;
 		VarSymbol *n = new ArraySymbol(static_cast<ArraySymbol *>(s));
-		auto r = varSt.insert(tmpName(), n);
-		assert(r == n);
+		assert(varSt.insert(tmpName(), n) == n); // == n
 		return 0;
 	}
+	// returned in each block
 	assert(false);
 }
 
@@ -144,20 +155,37 @@ int UniExpr::typeCheck() const
 		return errline;
 	// we assume only basic types are allowed, i.e. compound types like pointers are not in consideration
 	VarSymbol *s = static_cast<VarSymbol *>(varSt.lookup(expr->tmpName()));
-	if (s->type != BType::bt_bool)
-		return errid = 11, expr->lineno;
+	if (op == UniOp::uni_not)
+		if (s->type != BType::bt_bool)
+			return errid = 11, expr->lineno;
+		else
+			return 0;
+	// op is - or +
+	else if (!is_arith_type(s->type))
+		return errid = 13, expr->lineno;
+	// fall to return
 	VarSymbol *n = new SimpleSymbol(BType::bt_bool);
 	auto r = varSt.insert(tmpName(), n);
-	assert(r == s);
+	assert(r == n);
 	return 0;
 }
 
 int Assign::typeCheck() const
 {
-	int errline = var->typeCheck();
-	if (errline)
+	int errline;
+	if ((errline = var->typeCheck()))
 		return errline;
-	return expr->typeCheck();
+	if ((errline = expr->typeCheck()))
+		return errline;
+	auto vs = static_cast<VarSymbol *>(varSt.lookup(var->tmpName()));
+	auto es = static_cast<VarSymbol *>(varSt.lookup(expr->tmpName()));
+	if ((errid = check_var_expr_type(vs, es)))
+		return lineno;
+	if (var->nameSym->symbol->wordsInDim.size() == 0)
+		varSt.insert(tmpName(), new SimpleSymbol(var->nameSym->symbol));
+	else
+		varSt.insert(tmpName(), new ArraySymbol(var->nameSym->symbol));
+	return 0;
 }
 
 
@@ -205,6 +233,9 @@ int If::typeCheck() const
 
 int Call::typeCheck() const
 {
+	// predifined vararg funcion
+	if (*name == "printf" || *name == "scanf")
+		return 0;
 	FunSymbol *s = static_cast<FunSymbol *>(funSt.lookup(*name));
 	// check if the function is defined
 	if (s == nullptr)
@@ -306,7 +337,7 @@ int Field::typeCheck() const
 		}
 	}
 	assert(s != nullptr);
-	var->nameSym->symbol=s;
+	var->nameSym->symbol = s;
 	auto r = varSt.insert(*var->nameSym->name, s);
 	if (r != s)
 		return errid = 3, lineno;
@@ -340,11 +371,9 @@ int SimpleVar::typeCheck() const
 	// sub-array add/sub
 	else if (s->wordsInDim.size() != 0)
 	{
-		VarSymbol *n = new ArraySymbol(s->type);
-		for (auto e : s->wordsInDim)
-			n->append(e);
-		auto r = varSt.insert(tmpName(), n);
-		assert(r == n);
+		VarSymbol *n = new ArraySymbol(static_cast<ArraySymbol *>(s));
+		varSt.insert(tmpName(), n);
+		// assert(varSt.insert(tmpName(), n) == n);
 		nameSym->symbol = n;
 		// fall to return
 	}
@@ -352,12 +381,16 @@ int SimpleVar::typeCheck() const
 	else
 	{
 		auto n = new SimpleSymbol(s->type);
-		auto r = varSt.insert(tmpName(), n);
-		assert(r == n);
+		varSt.insert(tmpName(), n);
+		// assert(varSt.insert(tmpName(), n) == n);
 		nameSym->symbol = n;
 		// fall to return
 	}
 	return 0;
+	/**
+	 * basically speaking we shall assert(r == n) in the above 2 blocks, however,
+	 * the assert will fails if we have the binary assignment like a += 2.
+	 */
 }
 
 
@@ -384,8 +417,8 @@ int ArrayVar::typeCheck() const
 	else if (s->wordsInDim.size() == exprs->list.size())
 	{
 		VarSymbol *n = new SimpleSymbol(s->type);
-		auto r = varSt.insert(tmpName(), n);
-		assert(r == n);
+		varSt.insert(tmpName(), n);
+		// assert(varSt.insert(tmpName(), n) == n); // == n
 		nameSym->symbol = n;
 		// fall to return
 	}
@@ -395,12 +428,17 @@ int ArrayVar::typeCheck() const
 		VarSymbol *n = new ArraySymbol(s->type);
 		for (auto i = exprs->list.size(); i < s->wordsInDim.size(); i++)
 			n->append(s->wordsInDim[i]);
-		auto r = varSt.insert(tmpName(), n);
-		assert(r == n);
+		varSt.insert(tmpName(), n);
+		// assert(varSt.insert(tmpName(), n) == n); // == n
 		nameSym->symbol = n;
 		// fall to return
 	}
 	return 0;
+	/**
+	 * Basically speaking we shall assert(r == n) in the above 2 blocks, however,
+	 * the assert will fails if we have the binary assignment like a += 2.
+	 * This situation will only appeared with Var (i.e., SimpleVar and ArrayVar)
+	 */
 }
 
 
@@ -409,8 +447,8 @@ int VarDecl::typeCheck() const
 {
 	for (auto &vardef : *vardefs)
 	{
-		auto &name = vardef->var;
-		auto &exprs = name->exprs->list;
+		auto &var = vardef->var;
+		auto &exprs = var->exprs->list;
 		VarSymbol *s = nullptr;
 		// simple variables
 		if (exprs.size() == 0)
@@ -431,7 +469,7 @@ int VarDecl::typeCheck() const
 		}
 		// insert the declared symbol into symbol table
 		assert(s != nullptr);
-		auto r = varSt.insert(*name->nameSym->name, s);
+		auto r = varSt.insert(*var->nameSym->name, s);
 		if (r != s)
 			return errid = 3, Unit::lineno;
 		// type info of the variable is inserted to the symbol table,
@@ -439,7 +477,7 @@ int VarDecl::typeCheck() const
 		int errline = vardef->typeCheck();
 		if (errline)
 			return errline;
-		name->nameSym->symbol = s;
+		var->nameSym->symbol = s;
 	}
 	return 0;
 }

@@ -14,7 +14,7 @@ SymScope::SymScope(SymScope *p) : parent(p), scopeSize(0)
 SymScope::~SymScope()
 {
 	// delete symbols (value)
-	for(auto &pair : scopeTable) 
+	for (auto &pair : scopeTable)
 		delete pair.second;
 	for (auto scope : children)
 		delete scope;

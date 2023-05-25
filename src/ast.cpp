@@ -2,10 +2,6 @@
 
 using namespace std;
 
-int BaseAST::errid;
-SymTab BaseAST::varSt;
-SymTab BaseAST::funSt;
-
 
 
 
@@ -626,4 +622,9 @@ llvm::Value *FloatExpr::codegen()
 {
 	return  llvm::ConstantFP::get(*TheContext, llvm::APFloat(num));
     return nullptr;
+}
+void Call::dumpInner(const int i) const {
+	indent(i);
+	cout << *name << endl;
+	params->Expr::dump(i);
 }

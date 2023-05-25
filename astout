@@ -1,57 +1,166 @@
-CompUnit (#line 4) {
-  FunDef (#line 4) {
-    Type (#line 1) {
-      int
+CompUnit (#line 10) {
+  FunDef (#line 10) {
+    Type (#line 10) {
+      void
     }    $Type
-    main
-    Block (#line 2) {
-      VarDecl (#line 2) {
-        Type (#line 2) {
+    print
+    Field (#line 2) {
+      Type (#line 2) {
+        int
+      }    $Type
+      ArrayVar (#line 2) {
+        a
+        IntExpr (#line 2) {
+          eval: 1
+          10
+        }    $IntExpr
+      }    $ArrayVar
+    }    $Field
+    Block (#line 3) {
+      VarDecl (#line 3) {
+        Type (#line 3) {
           int
         }    $Type
-        InitVarDef (#line 2) {
-          SimpleVar (#line 2) {
+        InitVarDef (#line 3) {
+          SimpleVar (#line 3) {
             i
           }    $SimpleVar
-          IntExpr (#line 2) {
+          IntExpr (#line 3) {
             eval: 1
             0
           }    $IntExpr
         }    $InitVarDef
-        InitVarDef (#line 2) {
-          SimpleVar (#line 2) {
-            j
-          }    $SimpleVar
-          IntExpr (#line 2) {
-            eval: 1
-            1
-          }    $IntExpr
-        }    $InitVarDef
       }    $VarDecl
-      VarDecl (#line 3) {
-        Type (#line 3) {
+      VarDecl (#line 4) {
+        Type (#line 4) {
           float
         }    $Type
-        InitVarDef (#line 3) {
-          SimpleVar (#line 3) {
+        VarDef (#line 4) {
+          SimpleVar (#line 4) {
             f
           }    $SimpleVar
-          BiExpr (#line 3) {
+        }    $VarDef
+      }    $VarDecl
+      ExprList (#line 5) {
+        Assign (#line 5) {
+          SimpleVar (#line 5) {
+            f
+          }    $SimpleVar
+          BiExpr (#line 5) {
             eval: 1
-            IntExpr (#line 3) {
+            IntExpr (#line 5) {
               eval: 1
               1
             }    $IntExpr
-            ==
-            IntExpr (#line 3) {
+            + opcode = 0
+            FloatExpr (#line 5) {
               eval: 1
-              2
+              0.4
+            }    $FloatExpr
+          }    $BiExpr
+        }    $Assign
+      }    $ExprList
+      For (#line 8) {
+        Assign (#line 6) {
+          SimpleVar (#line 6) {
+            i
+          }    $SimpleVar
+          IntExpr (#line 6) {
+            eval: 1
+            0
+          }    $IntExpr
+        }    $Assign
+        BiExpr (#line 6) {
+          eval: 1
+          SimpleVar (#line 6) {
+            i
+          }    $SimpleVar
+          < opcode = 8
+          IntExpr (#line 6) {
+            eval: 1
+            11
+          }    $IntExpr
+        }    $BiExpr
+        Assign (#line 6) {
+          SimpleVar (#line 6) {
+            i
+          }    $SimpleVar
+          BiExpr (#line 6) {
+            eval: 1
+            SimpleVar (#line 6) {
+              i
+            }    $SimpleVar
+            + opcode = 0
+            IntExpr (#line 6) {
+              eval: 1
+              1
             }    $IntExpr
           }    $BiExpr
-        }    $InitVarDef
+        }    $Assign
+        Block (#line 7) {
+          ExprList (#line 7) {
+            Call (#line 7) {
+              printf
+              ExprList (#line 7) {
+                StringExpr (#line 7) {
+                  eval: 1
+                  "%d "
+                }    $StringExpr
+                ArrayVar (#line 7) {
+                  a
+                  SimpleVar (#line 7) {
+                    i
+                  }    $SimpleVar
+                }    $ArrayVar
+              }    $ExprList
+            }    $Call
+          }    $ExprList
+        }    $Block
+      }    $For
+      ExprList (#line 9) {
+        Call (#line 9) {
+          printf
+          ExprList (#line 9) {
+            StringExpr (#line 9) {
+              eval: 1
+              "\n"
+            }    $StringExpr
+          }    $ExprList
+        }    $Call
+      }    $ExprList
+    }    $Block
+  }    $FunDef
+  FunDef (#line 14) {
+    Type (#line 11) {
+      int
+    }    $Type
+    main
+    Block (#line 12) {
+      VarDecl (#line 12) {
+        Type (#line 12) {
+          int
+        }    $Type
+        InitArrayDef (#line 12) {
+          ArrayVar (#line 12) {
+            a
+            IntExpr (#line 12) {
+              eval: 1
+              10
+            }    $IntExpr
+          }    $ArrayVar
+        }    $InitArrayDef
       }    $VarDecl
+      ExprList (#line 13) {
+        Call (#line 13) {
+          print
+          ExprList (#line 13) {
+            SimpleVar (#line 13) {
+              a
+            }    $SimpleVar
+          }    $ExprList
+        }    $Call
+      }    $ExprList
     }    $Block
   }    $FunDef
 }    $CompUnit
-err lineno = 4
-(base) type conversion fails
+PASS

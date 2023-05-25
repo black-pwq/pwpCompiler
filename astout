@@ -1,0 +1,57 @@
+CompUnit (#line 4) {
+  FunDef (#line 4) {
+    Type (#line 1) {
+      int
+    }    $Type
+    main
+    Block (#line 2) {
+      VarDecl (#line 2) {
+        Type (#line 2) {
+          int
+        }    $Type
+        InitVarDef (#line 2) {
+          SimpleVar (#line 2) {
+            i
+          }    $SimpleVar
+          IntExpr (#line 2) {
+            eval: 1
+            0
+          }    $IntExpr
+        }    $InitVarDef
+        InitVarDef (#line 2) {
+          SimpleVar (#line 2) {
+            j
+          }    $SimpleVar
+          IntExpr (#line 2) {
+            eval: 1
+            1
+          }    $IntExpr
+        }    $InitVarDef
+      }    $VarDecl
+      VarDecl (#line 3) {
+        Type (#line 3) {
+          float
+        }    $Type
+        InitVarDef (#line 3) {
+          SimpleVar (#line 3) {
+            f
+          }    $SimpleVar
+          BiExpr (#line 3) {
+            eval: 1
+            IntExpr (#line 3) {
+              eval: 1
+              1
+            }    $IntExpr
+            ==
+            IntExpr (#line 3) {
+              eval: 1
+              2
+            }    $IntExpr
+          }    $BiExpr
+        }    $InitVarDef
+      }    $VarDecl
+    }    $Block
+  }    $FunDef
+}    $CompUnit
+err lineno = 4
+(base) type conversion fails

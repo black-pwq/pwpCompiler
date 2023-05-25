@@ -13,14 +13,8 @@ enum BType
 	bt_int,
 	bt_float,
 	bt_void,
-	bt_char
-};
-static int BTypeSize[] = {0, 4, 4, 0};
-
-struct CType
-{
-	const BType btype;
-	const int dim;
+	bt_char,
+	bt_bool,
 };
 
 struct Symbol
@@ -48,51 +42,20 @@ struct VarSymbol : Symbol
 
 struct SimpleSymbol : VarSymbol
 {
-	SimpleSymbol(BType t) : VarSymbol(t)
-	{
-		assert(type != bt_undef);
-		assert(type != bt_void);
-	}
-	virtual int getSize() const override
-	{
-		return BTypeSize[type];
-	}
-	virtual void dump(FILE *f) const override
-	{
-		char tn[][6] = {"undef", "int", "float", "void"};
-		fprintf(f, "%s", tn[type]);
-	}
-	virtual void append(const int w) override
-	{
-		wordsInDim.push_back(w);
-	}
+	SimpleSymbol(BType t);
+	virtual int getSize() const override;
+	virtual void dump(FILE *f) const override;
+	virtual void append(const int w) override;
 };
 
 struct ArraySymbol : VarSymbol
 {
-	ArraySymbol(BType b) : VarSymbol(b), sizeInWord(1)
-	{
-		assert(b != bt_undef);
-		assert(b != bt_void);
-	}
-
-	virtual int getSize() const override
-	{
-		return sizeInWord * BTypeSize[type];
-	}
-	virtual void dump(FILE *f) const override
-	{
-		char tn[][6] = {"undef", "int", "float", "void"};
-		fprintf(f, "%s", tn[type]);
-		for (int l : wordsInDim)
-			fprintf(f, "[%d]", l);
-		fprintf(f, ", sizeInWord = %d, size = %d", sizeInWord, getSize());
-	}
-	virtual void append(const int w) override
-	{
-		wordsInDim.push_back(w);
-		sizeInWord *= w;
-	}
+	ArraySymbol(BType b);
+	ArraySymbol(ArraySymbol &other);
+	ArraySymbol(ArraySymbol *other);
+	virtual int getSize() const override;
+	virtual void dump(FILE *f) const override;
+	virtual void append(const int w) override;
 
 private:
 	int sizeInWord;
@@ -103,18 +66,18 @@ struct FunSymbol : Symbol
 	/**
 	 * Associated VarSymbols with formals.
 	 * Those symbols are managed by the symbol table of varaibles.
-	*/
+	 */
 	std::vector<VarSymbol *> types;
-	FunSymbol(BType r) : Symbol(r) {}
-	void appendType(VarSymbol *s) { types.push_back(s); }
-	virtual int getSize() const override { return 0; }
-	virtual void dump(FILE *f) const override
-	{
-		char tn[][6] = {"undef", "int", "float", "void"};
-		fprintf(f, "returnType = %s ", tn[type]);
-		for (auto t : types)
-		{
-			t->dump(f);
-		}
-	}
+	FunSymbol(BType r);
+	void appendType(VarSymbol *s);
+	virtual int getSize() const override;
+	virtual void dump(FILE *f) const override;
+};
+
+template <typename T>
+struct NameSym {
+	std::unique_ptr<std::string> name;
+	T *symbol;
+	NameSym(std::string *n) : name(n) {}
+	NameSym(std::string *n, T *t) : name(n), symbol(t) {}
 };

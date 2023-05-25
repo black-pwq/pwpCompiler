@@ -10,6 +10,7 @@ using namespace std;
 
 extern FILE *yyin;
 extern int yyparse(unique_ptr<CompUnit> &ast);
+extern SymTab tmpSt;
 
 std::string errtab[] = {
     "PASS",
@@ -17,16 +18,21 @@ std::string errtab[] = {
     "array size is non-poisitive",
     "already declared variable in the same scope",
     "variable is not defined so far",
-    "variable (base) type mismatch with definition",
+    "variable (compound) type mismatch with definition",
     "array dimention mismath with definition",
     "fun redefinition",
     "fun definition not find",
     "#arguments mismatch with the definition of function",
     "no main fucntion",
-};
+    "expression type mismatch (expected boolean)",
+    "expression type mismatch (expected arithmetic)",
+    "(base) type conversion fails",
+    "(compound) type conversion fails",
+    "pointer biop pointer is not allowed",
+    "array access out of dimension",
+    };
 
-int
-main(int argc, const char *argv[])
+int main(int argc, const char *argv[])
 {
   auto input = argv[1];
 

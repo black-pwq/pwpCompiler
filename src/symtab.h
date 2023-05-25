@@ -80,19 +80,19 @@ public:
 	SymScope *getCurrScope();
 
 	// Returns true if name is found in the current SymTab or any of the parents
-	bool exist(std::string &name);
+	bool exist(const std::string &name);
 
 	/**
 	 * return the successfully inserted Symbol or
 	 * the existing one in the current scope
 	 */
-	Symbol *insert(std::string &name, Symbol *s);
+	Symbol *insert(const std::string &name, Symbol *s);
 
 	/**
 	 * return the successfully inserted Symbol or
 	 * the existing one in the current scope
 	 */
-	Symbol *insertInParent(std::string &name, Symbol *s);
+	Symbol *insertInParent(const std::string &name, Symbol *s);
 
 	/**
 	 * return the exisiting Symbol in the

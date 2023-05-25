@@ -26,7 +26,7 @@ void SymScope::dump(FILE *f, int nest_level)
 	// from the head down through all the childrens
 	for (int i = 0; i < nest_level; i++)
 		fprintf(f, "\t");
-	fprintf(f, "+-- Symbol Scope ---\n");
+	fprintf(f, "+-- Symbol Scope %d ---\n", scopeSize);
 
 	for (auto &si : scopeTable)
 	{
@@ -134,18 +134,18 @@ SymScope *SymTab::getCurrScope()
 	return currScope;
 }
 
-bool SymTab::exist(string &name)
+bool SymTab::exist(const string &name)
 {
 	return currScope->exist(name);
 }
 
-Symbol *SymTab::insert(string &name, Symbol *s)
+Symbol *SymTab::insert(const string &name, Symbol *s)
 {
 	assert(s != nullptr);
 	return currScope->insert(name, s);
 }
 
-Symbol *SymTab::insertInParent(string &name, Symbol *s)
+Symbol *SymTab::insertInParent(const string &name, Symbol *s)
 {
 	assert(s != nullptr);
 	assert(currScope->parent != nullptr);

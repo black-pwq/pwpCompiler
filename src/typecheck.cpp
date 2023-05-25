@@ -12,6 +12,7 @@ static bool is_arith_type(BType t)
  * Type info already inseted into symbol table by VarDecl,
  * check if the type of the expression matches the definition.
  */
+
 int InitVarDef::typeCheck() const
 {
 	VarSymbol *v = static_cast<VarSymbol *>(varSt.lookup(*var->nameSym->name));
@@ -39,6 +40,7 @@ int IntExpr::typeCheck() const
 	assert(r == n);
 	return 0;
 }
+
 int FloatExpr::typeCheck() const
 {
 	VarSymbol *n = new SimpleSymbol(BType::bt_float);
@@ -46,6 +48,7 @@ int FloatExpr::typeCheck() const
 	assert(r == n);
 	return 0;
 }
+
 
 int BiExpr::typeCheck() const
 {
@@ -156,6 +159,7 @@ int Assign::typeCheck() const
 		return errline;
 	return expr->typeCheck();
 }
+
 
 int Return::typeCheck() const
 {
@@ -302,6 +306,7 @@ int Field::typeCheck() const
 		}
 	}
 	assert(s != nullptr);
+	var->nameSym->symbol=s;
 	auto r = varSt.insert(*var->nameSym->name, s);
 	if (r != s)
 		return errid = 3, lineno;
@@ -355,6 +360,7 @@ int SimpleVar::typeCheck() const
 	return 0;
 }
 
+
 /**
  * ArrayVar could be used for
  * 1. array elements access, e.g. a[2][3];
@@ -363,6 +369,7 @@ int SimpleVar::typeCheck() const
  *
  * Array declaration is considered in VarDecl.
  */
+
 
 int ArrayVar::typeCheck() const
 {
@@ -395,6 +402,8 @@ int ArrayVar::typeCheck() const
 	}
 	return 0;
 }
+
+
 
 int VarDecl::typeCheck() const
 {

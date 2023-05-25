@@ -168,6 +168,7 @@ struct ConstExpr : Expr {
 struct IntExpr : ConstExpr {
 	IntExpr(const int i) : ConstExpr(i) {}
 	virtual int typeCheck() const override;
+	llvm::Value *codegen()override;
 protected:
 	void dumpInner(const int i) const override ;
 };
@@ -175,6 +176,8 @@ protected:
 struct FloatExpr : ConstExpr {
 	FloatExpr(const float f) : ConstExpr(f) {}
 	virtual int typeCheck() const override;
+	llvm::Value *codegen()override;
+
 protected:
 	void dumpInner(const int i) const override ;
 };
@@ -329,10 +332,12 @@ protected:
 
 // Var
 struct Var: Expr { 
+
 	std::unique_ptr<NameSym<VarSymbol>> nameSym;
 	std::unique_ptr<ExprList> exprs;
 	Var(std::string *s, ExprList *e) : nameSym(new NameSym<VarSymbol>(s)), exprs(e) {}
 	virtual int typeCheck() const = 0;
+	virtual void vardefwithoutinit(BType bt) = 0;
 	// virtual int sizeInWord() const = 0;
 protected:
 	virtual void dumpInner(const int i) const override;
@@ -348,6 +353,7 @@ struct SimpleVar: Var {
 	 * Here, we are looking for the symbol in the symTab.
 	*/
 	virtual int typeCheck() const override;
+	void vardefwithoutinit(BType bt) override;
 	// virtual int sizeInWord() const {return 1;}
 	// dumpInner inherited from Var
 };
@@ -361,7 +367,10 @@ struct ArrayVar: Var {
 	 * TypeCheck will not be called if it is in VarDef.
 	 * Here, we are looking for the symbol in the symTab.
 	*/
+	void vardefwithoutinit(BType bt) override;
+
 	virtual int typeCheck() const override;
+
 	// virtual int sizeInWord() const override;
 protected:
 	virtual void dumpInner(const int i) const override;
@@ -370,8 +379,10 @@ protected:
 struct VarDef : BaseAST {
 	std::unique_ptr<Var> var;
 	VarDef(Var *n) : var(n) {}
+	virtual void valuedef(BType bt);
 	// No need to implement typeCheck here, since the type is not associcated in this class.
 	// We check and insert symbols in VarDecl
+	
 protected:
 	virtual void dumpInner(const int i) const override;
 };
@@ -381,7 +392,7 @@ using VarDefs = std::vector<std::unique_ptr<VarDef>>;
 struct InitVarDef : VarDef {
 	std::unique_ptr<Expr> expr;
 	InitVarDef(Var *n, Expr *e) : VarDef(n), expr(e) {}
-
+	void valuedef(BType bt)override;
 	/**
 	 * Type info already inseted into symbol table by VarDecl,
 	 * check if the type of the expression matches the definition.
@@ -394,6 +405,8 @@ protected:
 struct InitArrayDef : VarDef {
 	std::unique_ptr<ExprList> exprs;
 	InitArrayDef(Var *n, ExprList *e) : VarDef(n), exprs(e) {}
+	void valuedef(BType bt)override;
+
 	// virtual int typeCheck() const override;
 };
 
@@ -404,6 +417,7 @@ struct Assign : Expr
 	Assign(Var *v, Expr *e) : var(v), expr(e) {}
 	Assign(std::shared_ptr<Var> v, Expr *e) : var(v), expr(e) {}
 	virtual int typeCheck() const override;
+	llvm::Value * codegen()override;
 protected:
 	void dumpInner(const int i) const override
 	{

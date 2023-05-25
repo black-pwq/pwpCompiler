@@ -25,6 +25,10 @@ llvm::Value *For::codegen()
 
 llvm::Value *While::codegen()
 {
+	// llvm::BasicBlock* for_cont = llvm::BasicBlock::Create(*TheContext, "for.cond", F);
+	// llvm::BasicBlock* for_body = llvm::BasicBlock::Create(*TheContext, "for.body", F);
+	// llvm::BasicBlock* for_end = llvm::BasicBlock::Create(*TheContext, "for.end", F);
+	// Builder->CreateBr(for_cont);
     return nullptr;
 }
 
@@ -32,6 +36,7 @@ llvm::Value *While::codegen()
 
 llvm::Value *IfElse::codegen()
 {
+
     return nullptr;
 }
 
@@ -39,6 +44,7 @@ llvm::Value *IfElse::codegen()
 
 llvm::Value *If::codegen()
 {
+	
     return nullptr;
 }
 
@@ -63,7 +69,10 @@ int Expr::t;
 
 llvm::Value *VarDecl::codegen()
 {
-	
+	for (int i = 0;i < vardefs->size();i++){
+		(*vardefs)[i]->valuedef(type->btype);
+
+	}
     return nullptr;
 }
 
@@ -172,29 +181,44 @@ void FunDef::unitcodegen()
 {
 
 	std::vector<llvm::Type*> field;
-	// std::cout<<(*fields).size()<<std::endl;
+
 	if(fields->size()>0){
 
 	
-		// for (int i = 0; i<fields->size(); ++i)
-		// {
-			
-		// 	if(((*fields)[i]->type->btype)==bt_int){
-		// 		field.push_back(llvm::Type::getInt32Ty(*TheContext));
-		// 	} 
-		// 	else if(((*fields)[i]->type->btype)==bt_float){
-		// 		field.push_back(llvm::Type::getFloatTy(*TheContext));
-		// 	} 
-		// 	else if(((*fields)[i]->type->btype)==bt_int ){
+		for (int i = 0; i<fields->size(); ++i)
+		{
+			BType arty = ((*fields)[i]->type->btype);
+			int dim = ((*fields)[i]->var->nameSym->symbol->wordsInDim.size());
+			std::cout << dim<<std::endl;
+			if(dim == 0){
+				switch (arty)
+				{
+				case bt_int:
+					field.push_back(llvm::Type::getInt32Ty(*TheContext));
+					break;
+				case bt_float:
+					field.push_back(llvm::Type::getFloatTy(*TheContext));
+					break;
+				default:
+					break;
+				}
+			}
+			else if(dim == 1){
+				field.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),(*fields)[i]->var->nameSym->symbol->wordsInDim[0]));
 
-		// 	}
+			} 
+			// else if(((*fields)[i]->type->btype)==bt_int ){
 
-		// }
-		field.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),10000));
-		field.push_back(llvm::Type::getInt32Ty(*TheContext));
-		field.push_back(llvm::Type::getInt32Ty(*TheContext));
+			// }
+
+		}
+
 	}
+			// field.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),10000));
+		// field.push_back(llvm::Type::getInt32Ty(*TheContext));
+		// field.push_back(llvm::Type::getInt32Ty(*TheContext));
 	llvm::FunctionType *ft;
+
 	if((type->btype) == bt_int){
 		std::cout<<"int func" <<std::endl;
 		ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext),field,false);
@@ -212,19 +236,24 @@ void FunDef::unitcodegen()
 	else{
 		std::cout<<"fundef fault"<<std::endl;
 	}
+	
 
 	// llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getDoubleTy(getGlobalContext()),Doubles, false);
   	llvm::Function *F = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, *nameSym->name, TheModule.get());
-    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
+    
+	for (int i = 0;i < fields->size();i++){
+			F->getArg(i)->setName(*(*fields)[i]->var->nameSym->name);
+
+	}
+			// F->getArg(1)->setName("b");
+
+	llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
   	Builder->SetInsertPoint(BB);
 	for (int i = 0;i < block->items.size();i++){
 		*block->items[i]->codegen();
-
 	}
 
 	
-
-
 	if(*nameSym->name == "main"){
 		Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
 
@@ -289,10 +318,12 @@ void VarDecl::dumpInner(const int i) const
 	}
 }
 
+
 void VarDef::dumpInner(const int i) const
 {
 	var->dump(i);
 }
+
 
 void Var::dumpInner(const int i) const
 {
@@ -353,6 +384,7 @@ llvm::Value *BiExpr::codegen()
 	if (!L || !R)
 		return nullptr;
 	// if(typeL == llvm::Type::DoubleTyID)
+	std::cout << "succ bin"<<std::endl;
 	switch (op)
 	{
 		case bi_add:
@@ -403,14 +435,15 @@ llvm::Value *Call::codegen()
 
 llvm::Value *Expr::codegen()
 {
-	if(evaluable){
-		
-	}
+	
     return nullptr;
 }
 
 llvm::Value *ExprList::codegen()
 {
+	for (int i =0 ;i < list.size();i++){
+		list[i]->codegen();
+	}
 	return nullptr;
 }
 
@@ -488,7 +521,12 @@ llvm::Value * SimpleVar::codegen()
 		} 
 		else{
 			auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
-
+			// TheContext
+			llvm::BasicBlock* bb = Builder->GetInsertBlock();
+			auto stable = bb->getValueSymbolTable();
+			auto fin = stable->lookup(*nameSym->name);
+			return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
+			// TheContext
     		
 
 		}
@@ -502,7 +540,90 @@ llvm::Value * SimpleVar::codegen()
 	return nullptr;
 }
 
+
 llvm::Value *ArrayVar::codegen()
 {
+    return nullptr;
+}
+
+void InitArrayDef::valuedef(BType bt)
+{
+	
+}
+void InitVarDef::valuedef(BType bt)
+{
+	var->vardefwithoutinit(bt);
+	llvm::BasicBlock* bb = Builder->GetInsertBlock();
+	auto stable = bb->getValueSymbolTable();
+	auto fin = stable->lookup(*var->nameSym->name);
+	auto vars = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
+	auto value = expr->codegen();
+	Builder->CreateStore(value,vars);
+
+}
+
+void VarDef::valuedef(BType bt)
+{
+	var->vardefwithoutinit(bt);
+}
+
+
+void SimpleVar::vardefwithoutinit(BType bt)
+{
+	switch (bt)
+	{
+	case bt_int:
+		Builder->CreateAlloca(llvm::IntegerType::get(TheModule->getContext(), 32), NULL, *nameSym->name);
+
+		break;
+	
+	case bt_float:
+		Builder->CreateAlloca(llvm::Type::getFloatTy(TheModule->getContext()), NULL, *nameSym->name);
+		break;
+	
+
+	default:
+		break;
+	}
+}
+
+void ArrayVar::vardefwithoutinit(BType bt)
+{
+	switch (bt)
+	{
+	case bt_int:
+		// Builder->CreateAlloca(llvm::IntegerType::get(TheModule->getContext(), 32), NULL, *nameSym->name);
+
+		break;
+	
+	case bt_float:
+		// Builder->CreateAlloca(llvm::Type::getFloatTy(TheModule->getContext()), NULL, *nameSym->name);
+		break;
+	
+
+	default:
+		break;
+	}
+}
+
+llvm::Value *Assign::codegen()
+{
+	
+	auto vars = var->codegen();
+	auto value = expr->codegen();
+	return Builder->CreateStore(value,vars);
+    
+}
+
+llvm::Value *IntExpr::codegen()
+{
+
+	return llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), (int)(num));
+    return nullptr;
+}
+
+llvm::Value *FloatExpr::codegen()
+{
+	return  llvm::ConstantFP::get(*TheContext, llvm::APFloat(num));
     return nullptr;
 }

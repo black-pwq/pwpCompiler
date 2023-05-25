@@ -66,9 +66,7 @@ protected:
 // Type
 struct Type : BaseAST {
 	const BType btype;
-	int dim = 0;
 	Type(BType b) : btype(b) {}
-	void addDim() {++dim;}
 protected:
 	void dumpInner(const int i) const override; 
 };
@@ -90,10 +88,14 @@ using FieldList = std::vector<std::unique_ptr<Field>>;
 struct Expr: BaseAST {
 	bool evaluable;
 	float num;
-	Expr() : evaluable(false), num(0) {}
-	Expr(float n) : evaluable(true), num(n) {}
+	Expr() : evaluable(false), num(0) {it = t++;}
+	Expr(float n) : evaluable(true), num(n) {it = t++;}
+	virtual std::string tmpName() const {return std::string("!e") + std::to_string(it);}
 protected:
 	virtual void dumpInner(const int i) const override;
+private:
+	static int t;
+	int it;
 };
 
 enum BiOp {bi_add, bi_sub, bi_times, bi_divide, bi_and, bi_or, bi_eq, bi_neq, bi_lt, bi_le, bi_gt, bi_ge};
@@ -103,6 +105,7 @@ struct UniExpr: Expr {
 	UniOp op;
 	std::unique_ptr<Expr> expr;
 	UniExpr(UniOp o, Expr *e); 
+	virtual int typeCheck() const override;
 protected:
 	virtual void dumpInner(const int i) const override;
 };
@@ -115,6 +118,7 @@ struct BiExpr: Expr {
 	BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) ;
 	BiExpr(Expr *l, BiOp o, std::shared_ptr<Expr> r);
 	BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) ;
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override; 
 };
@@ -132,12 +136,14 @@ struct ConstExpr : Expr {
 
 struct IntExpr : ConstExpr {
 	IntExpr(const int i) : ConstExpr(i) {}
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override ;
 };
 
 struct FloatExpr : ConstExpr {
 	FloatExpr(const float f) : ConstExpr(f) {}
+	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override ;
 };
@@ -258,6 +264,7 @@ struct Var: Expr {
 	std::unique_ptr<ExprList> exprs;
 	Var(std::string *s, ExprList *e) : sym(s), exprs(e) {}
 	virtual int typeCheck() const = 0;
+	virtual std::string tmpName() const override {return *sym;}
 	// virtual int sizeInWord() const = 0;
 protected:
 	virtual void dumpInner(const int i) const override;
@@ -301,13 +308,15 @@ using VarDefs = std::vector<std::unique_ptr<VarDef>>;
 struct InitVarDef : VarDef {
 	std::unique_ptr<Expr> expr;
 	InitVarDef(Var *n, Expr *e) : VarDef(n), expr(e) {}
-	// typeCheck inherited from VarDef
+	virtual int typeCheck() const override;
+protected:
+	virtual void dumpInner(const int i) const override;
 };
 
 struct InitArrayDef : VarDef {
 	std::unique_ptr<ExprList> exprs;
 	InitArrayDef(Var *n, ExprList *e) : VarDef(n), exprs(e) {}
-	// typeCheck inherited from VarDef
+	// virtual int typeCheck() const override;
 };
 
 struct Assign : Expr {

@@ -90,10 +90,10 @@ BType
 
 VarDef
   : Var                             {auto v = new VarDefs(); v->emplace_back(unique_ptr<VarDef>(new VarDef($1))); $$ = v;}
-  | Var '=' E                       {auto v = new VarDefs(); v->emplace_back(unique_ptr<InitVarDef>(new InitVarDef($1, $3))); $$ = v;}
+  | Var '=' Expr                       {auto v = new VarDefs(); v->emplace_back(unique_ptr<InitVarDef>(new InitVarDef($1, $3))); $$ = v;}
   | Var '=' ArrayInitVal            {auto v = new VarDefs(); v->emplace_back(unique_ptr<InitArrayDef>(new InitArrayDef($1, $3))); $$ = v;}
   | VarDef ',' Var                  {$1->emplace_back(unique_ptr<VarDef>(new VarDef($3))); $$ = $1;}
-  | VarDef ',' Var '=' E            {$1->emplace_back(unique_ptr<InitVarDef>(new InitVarDef($3, $5))); $$ = $1;}
+  | VarDef ',' Var '=' Expr            {$1->emplace_back(unique_ptr<InitVarDef>(new InitVarDef($3, $5))); $$ = $1;}
   | VarDef ',' Var '=' ArrayInitVal {$1->emplace_back(unique_ptr<InitArrayDef>(new InitArrayDef($3, $5))); $$ = $1;}
   ;
 

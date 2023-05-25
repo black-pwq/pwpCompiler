@@ -14,3 +14,5 @@
 14. (compound) type conversion fails
 15. pointer biop pointer is not allowed
 16. array access out of dimension
+17. parameter (base) type mismatch
+18. parameter (compound) type mismatch

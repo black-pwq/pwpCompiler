@@ -11,7 +11,7 @@ static bool is_arith_type(BType t)
 /**
  * Type info already inseted into symbol table by VarDecl,
  * check if the type of the expression matches the definition.
-*/
+ */
 int InitVarDef::typeCheck() const
 {
 	VarSymbol *v = static_cast<VarSymbol *>(varSt.lookup(*var->nameSym->name));
@@ -102,7 +102,6 @@ int BiExpr::typeCheck() const
 		}
 		else if (op == BiOp::bi_and || op == BiOp::bi_or)
 		{
-			this->dump();
 			if (lt == BType::bt_bool && rt == BType::bt_bool)
 			{
 				VarSymbol *n = new SimpleSymbol(BType::bt_bool);
@@ -215,8 +214,22 @@ int Call::typeCheck() const
 		int errline = e->typeCheck();
 		if (errline)
 			return errline;
-		// TODO
-		// then check if the types also match
+	}
+	// then check if the types also match
+	auto &exprs = params->list;
+	for (std::vector<std::unique_ptr<Expr>>::size_type i = 0; i < params->list.size(); ++i)
+	{
+		auto es = static_cast<VarSymbol *>(varSt.lookup(exprs[i]->tmpName()));
+		assert(es);
+		if (es->type != s->types[i]->type)
+			return errid = 17, exprs[i]->lineno;
+		else if (es->wordsInDim.size() != s->types[i]->wordsInDim.size())
+		{
+			cout << es->wordsInDim.size() << endl;
+			cout << s->types[i]->wordsInDim.size() << endl;
+			return errid = 18, exprs[i]->lineno;
+		}
+		// else ok
 	}
 	return 0;
 }
@@ -322,10 +335,11 @@ int SimpleVar::typeCheck() const
 	else if (s->wordsInDim.size() != 0)
 	{
 		VarSymbol *n = new ArraySymbol(s->type);
-		for (auto e : n->wordsInDim)
+		for (auto e : s->wordsInDim)
 			n->append(e);
 		auto r = varSt.insert(tmpName(), n);
 		assert(r == n);
+		nameSym->symbol = n;
 		// fall to return
 	}
 	// simple variable use
@@ -334,6 +348,7 @@ int SimpleVar::typeCheck() const
 		auto n = new SimpleSymbol(s->type);
 		auto r = varSt.insert(tmpName(), n);
 		assert(r == n);
+		nameSym->symbol = n;
 		// fall to return
 	}
 	return 0;
@@ -362,6 +377,7 @@ int ArrayVar::typeCheck() const
 		VarSymbol *n = new SimpleSymbol(s->type);
 		auto r = varSt.insert(tmpName(), n);
 		assert(r == n);
+		nameSym->symbol = n;
 		// fall to return
 	}
 	// add/sub
@@ -372,6 +388,7 @@ int ArrayVar::typeCheck() const
 			n->append(s->wordsInDim[i]);
 		auto r = varSt.insert(tmpName(), n);
 		assert(r == n);
+		nameSym->symbol = n;
 		// fall to return
 	}
 	return 0;

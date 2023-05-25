@@ -29,7 +29,9 @@ std::string errtab[] = {
     "(compound) type conversion fails",
     "pointer biop pointer is not allowed",
     "array access out of dimension",
-    };
+    "parameter (base) type mismatch",
+    "parameter (compound) type mismatch",
+};
 
 int main(int argc, const char *argv[])
 {

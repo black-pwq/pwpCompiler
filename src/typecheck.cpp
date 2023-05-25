@@ -312,6 +312,7 @@ int CompUnit::typeCheck() const
 /**
  * SimpleVar could be an array identifier, or simplely a var declared with a base type
  */
+
 int SimpleVar::typeCheck() const
 {
 	// look for declaration
@@ -347,6 +348,7 @@ int SimpleVar::typeCheck() const
  *
  * Array declaration is considered in VarDecl.
  */
+
 int ArrayVar::typeCheck() const
 {
 	// look the declareation

@@ -63,6 +63,7 @@ int Expr::t;
 
 llvm::Value *VarDecl::codegen()
 {
+	
     return nullptr;
 }
 
@@ -475,4 +476,33 @@ void InitVarDef::dumpInner(const int i) const
 {
 	var->dump(i);
 	expr->dump(i);
+}
+
+llvm::Value * SimpleVar::codegen()
+{
+	if(nameSym->symbol->type == bt_int){
+		if(evaluable == 1){
+			auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
+			llvm::Constant *i32_val = llvm::ConstantInt::get(ty,(int)(num), true);
+			return i32_val;
+		} 
+		else{
+			auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
+
+    		
+
+		}
+	}
+	else if(nameSym->symbol->type == bt_int){
+
+	}
+	else if(nameSym->symbol->type == bt_float){
+		
+	}
+	return nullptr;
+}
+
+llvm::Value *ArrayVar::codegen()
+{
+    return nullptr;
 }

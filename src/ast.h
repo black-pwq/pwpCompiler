@@ -339,6 +339,8 @@ protected:
 };
 
 struct SimpleVar: Var {
+	llvm::Value *codegen()override;
+
 	SimpleVar(std::string *s) : Var(s, new ExprList()) {}
 
 	/**
@@ -351,6 +353,8 @@ struct SimpleVar: Var {
 };
 
 struct ArrayVar: Var {
+	llvm::Value *codegen() override;
+
 	ArrayVar(std::string *v, ExprList *e) : Var(v, e) {}
 
 	/**
@@ -441,7 +445,7 @@ struct FunDef : Unit
 	std::unique_ptr<Block> block;
 	FunDef(Type *t, std::string *n, FieldList *f, Block *b) : type(t), nameSym(new NameSym<FunSymbol>(n)), fields(f), block(b) {}
 	FunDef(Type *t, std::string *n, Block *b) : type(t), nameSym(new NameSym<FunSymbol>(n)), fields(new FieldList()), block(b) {}
-	void FunDef::unitcodegen() override;
+	void unitcodegen() override;
 
 	virtual int typeCheck() const override;
 protected:

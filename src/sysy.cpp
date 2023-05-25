@@ -27,7 +27,9 @@ std::string errtab[] = {
     "expression type mismatch (expected arithmetic)",
     "(base) type conversion fails",
     "(compound) type conversion fails",
-};
+    "pointer biop pointer is not allowed",
+    "array access out of dimension",
+    };
 
 int main(int argc, const char *argv[])
 {

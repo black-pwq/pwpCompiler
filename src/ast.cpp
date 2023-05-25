@@ -17,8 +17,19 @@ int Return::typeCheck() const {
 	return expr->typeCheck();
 }
 
-int For::typeCheck() const {
-	int errline = init->typeCheck();
+llvm::Value *Return::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *For::codegen()
+{
+    return nullptr;
+}
+
+int For::typeCheck() const
+{
+    int errline = init->typeCheck();
 	if(errline)
 		return errline;
 	if(( errline = expr->typeCheck() ))
@@ -34,6 +45,11 @@ int While::typeCheck() const {
 	return stmt->typeCheck();
 }
 
+llvm::Value *While::codegen()
+{
+    return nullptr;
+}
+
 int IfElse::typeCheck() const {
 	int errline = expr->typeCheck();
 	if(errline != 0)
@@ -43,11 +59,21 @@ int IfElse::typeCheck() const {
 	return fs->typeCheck();
 }
 
+llvm::Value *IfElse::codegen()
+{
+    return nullptr;
+}
+
 int If::typeCheck() const {
 	int errline = expr->typeCheck();
 	if(errline != 0)
 		return errline;
 	return stmt->typeCheck();
+}
+
+llvm::Value *If::codegen()
+{
+    return nullptr;
 }
 
 int Call::typeCheck() const {
@@ -91,6 +117,11 @@ int Block::typeCheck() const
 	}
 	varSt.closeScope();
 	return 0;
+}
+
+llvm::Value *Block::codegen()
+{
+    return nullptr;
 }
 
 int FunDef::typeCheck() const
@@ -207,6 +238,11 @@ int VarDecl::typeCheck() const
 	return 0;
 }
 
+llvm::Value *VarDecl::codegen()
+{
+    return nullptr;
+}
+
 static float eval_bi(int l, BiOp op, int r)
 {
 	switch (op)
@@ -308,21 +344,31 @@ void BaseAST::indent(const int i) const
 		std::cout << "  ";
 }
 
-void FunDef::codegen()
+void FunDef::unitcodegen()
 {
 
 	std::vector<llvm::Type*> field;
-	std::cout<<(*fields).size()<<std::endl;
-	for (int i = 0; i<(*fields).size(); ++i)
-	{
- 
-		if(((*fields)[i]->type->btype)==bt_int){
-			field.push_back(llvm::Type::getInt32Ty(*TheContext));
-		} 
-		else if(((*fields)[i]->type->btype)==bt_float){
-			field.push_back(llvm::Type::getFloatTy(*TheContext));
-		} 
+	// std::cout<<(*fields).size()<<std::endl;
+	if(fields->size()>0){
 
+	
+		// for (int i = 0; i<fields->size(); ++i)
+		// {
+			
+		// 	if(((*fields)[i]->type->btype)==bt_int){
+		// 		field.push_back(llvm::Type::getInt32Ty(*TheContext));
+		// 	} 
+		// 	else if(((*fields)[i]->type->btype)==bt_float){
+		// 		field.push_back(llvm::Type::getFloatTy(*TheContext));
+		// 	} 
+		// 	else if(((*fields)[i]->type->btype)==bt_int ){
+
+		// 	}
+
+		// }
+		field.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),10000));
+		field.push_back(llvm::Type::getInt32Ty(*TheContext));
+		field.push_back(llvm::Type::getInt32Ty(*TheContext));
 	}
 	llvm::FunctionType *ft;
 	if((type->btype) == bt_int){
@@ -334,7 +380,7 @@ void FunDef::codegen()
 
 	}
 	else if((type->btype) == bt_char){
-		// ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext),field,false);
+		std::cout<<"return char no support"<<std::endl;
 
 	}else if((type->btype) == bt_void){
 		ft = llvm::FunctionType::get(llvm::Type::getVoidTy(*TheContext),field,false);
@@ -347,86 +393,22 @@ void FunDef::codegen()
   	llvm::Function *F = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, *name, TheModule.get());
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
   	Builder->SetInsertPoint(BB);
+	for (int i = 0;i < block->items.size();i++){
+		*block->items[i]->codegen();
 
-	//io
-	llvm::AllocaInst *allocDeclrInt = Builder->CreateAlloca(llvm::IntegerType::getInt32Ty(*TheContext), NULL, "a.addr");
-	std::vector<llvm::Type *> putsArgs;
-    putsArgs.push_back(Builder->getInt8Ty()->getPointerTo());
-    llvm::ArrayRef<llvm::Type*>  argsRef(putsArgs);
-    llvm::FunctionType *putsType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef, true);
-    llvm::Function *putsFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction("printf", putsType).getCallee());
+	}
 
-
-	std::vector<llvm::Type *> inArgs;
-    inArgs.push_back(Builder->getInt8Ty()->getPointerTo());
-    llvm::ArrayRef<llvm::Type*>  argsRef2(inArgs);
-	//scanf def
-    llvm::FunctionType *inType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef2, true);
-    llvm::Function *inFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction("scanf", inType).getCallee());
-	
-	
-	std::vector<llvm::Value*> field1;
-	field1.push_back(Builder->CreateGlobalStringPtr("%d"));
-	field1.push_back(allocDeclrInt);
-    Builder->CreateCall(inFunc,field1);
-
-	llvm::ArrayType* arrayType = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),100);
-	llvm::Value* array = Builder->CreateAlloca(arrayType );
-
-	llvm::Value* i_load = Builder->CreateAlloca(llvm::IntegerType::getInt32Ty(*TheContext), NULL, "i_load");
-	Builder->CreateStore(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0), i_load);
 	
 
-	llvm::BasicBlock* for_cont = llvm::BasicBlock::Create(*TheContext, "for.cond", F);
-	llvm::BasicBlock* for_body = llvm::BasicBlock::Create(*TheContext, "for.body", F);
-	llvm::BasicBlock* for_end = llvm::BasicBlock::Create(*TheContext, "for.end", F);
-	Builder->CreateBr(for_cont);
-	
-	//for_cont基本块
-	Builder->SetInsertPoint(for_cont);
-	llvm::Value *cmpitmp = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),i_load,"cmpitmp");
-	llvm::Value *cmpitmp2 = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),allocDeclrInt,"cmpitmp2");
-	llvm::Value* icmp = Builder->CreateICmpSLT(cmpitmp, cmpitmp2,"cmptmp");
-	Builder->CreateCondBr(icmp, for_body, for_end);
-	
-	//for_body基本块
-	Builder->SetInsertPoint(for_body);
-	std::vector<llvm::Value*> Idxs;
-	llvm::Value *itmp1 = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),i_load,"itmpinbody");
-	
-	Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
-	Idxs.push_back(itmp1);
-	llvm::Value* array_i = Builder->CreateGEP(arrayType,array, Idxs,"array_i");
 
-	std::vector<llvm::Value*> field3;
-	field3.push_back(Builder->CreateGlobalStringPtr("%d"));
-	field3.push_back(array_i);
-    Builder->CreateCall(inFunc,field3);
+	if(*name == "main"){
+		Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
 
-	std::vector<llvm::Value*> field4;
-	field4.push_back(Builder->CreateGlobalStringPtr("%d\n"));
-	field4.push_back(Builder->CreateLoad(llvm::IntegerType::get(TheModule->getContext(), 32),array_i));
-    Builder->CreateCall(putsFunc,field4);
-	//get each i using io
-
-	llvm::Value *itmp = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),i_load,"itmp");
-	llvm::Value* i_add = Builder->CreateAdd(itmp, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 1));
-	Builder->CreateStore(i_add, i_load);
-	Builder->CreateBr(for_cont);
-	
-	Builder->SetInsertPoint(for_end);
-	Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
-
-
+	}else
+		Builder->CreateRetVoid();
     verifyFunction(*F);
 }
 
-
-void Unit::codegen()
-{
-	std::cout<<"Unit init" <<std::endl;
-    // return nullptr;
-}
 
 
 
@@ -451,15 +433,14 @@ void Block::dumpInner(const int i) const
 		s->dump(i);
 }
 
-
-void CompUnit::codegen()
+void CompUnit::unitcodegen()
 {
 	// initmodule();
 	std::cout<<"compunit count " << units.size() <<std::endl;
 	for (int i = 0; i<units.size(); i++)
 	{
  
-		units[i]->codegen();
+		units[i]->unitcodegen();
 	}
 }
 
@@ -522,13 +503,13 @@ void UniExpr::dumpInner(const int i) const
 
 llvm::Value *UniExpr::codegen()
 {
-
+	llvm::Value* opnd = expr->codegen();
 	if(op == uni_plus){
-
+		return opnd;
 	}
 	else if(op == uni_minus){
-		llvm::Value *res = expr->codegen();
-		return res;
+		
+		// return Builder->create;
 	}
 	else if(op == uni_not){
 
@@ -557,21 +538,50 @@ llvm::Value *BiExpr::codegen()
 		case bi_times:
 			return Builder->CreateMul(L, R, "multmp");
 		case bi_divide:
+			return nullptr;
 		case bi_lt:
-			L = Builder->CreateFCmpULT(L, R, "cmptmp");
+			return Builder->CreateICmpSLT(L, R, "cmptmplt");
+		case bi_le:
+			return Builder->CreateICmpSLE(L, R, "cmptmple");
+		case bi_gt:
+			return Builder->CreateICmpSLT(L, R, "cmptmpgt");
+		case bi_ge:
+			return Builder->CreateICmpSLT(L, R, "cmptmpge");
+		case bi_eq:
+			return Builder->CreateICmpEQ(L, R, "cmptmpeq");
+		case bi_neq:
+			return Builder->CreateICmpNE(L, R, "cmptmpneq");
+		case bi_and:
+			return Builder->CreateAnd(L, R, "cmptmpand");
+		case bi_or:
+			return Builder->CreateOr(L, R, "cmptmpor");
+		default:
+			return nullptr;
 	}
+
+	
     return nullptr;
 }
 
-
 llvm::Value *Call::codegen()
 {
+	std::vector<llvm::Type *> inArgs;
+
+    inArgs.push_back(Builder->getVoidTy());
+    llvm::ArrayRef<llvm::Type*>  argsRef2(inArgs);
+	//scanf def
+    llvm::FunctionType *inType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef2, false);
+    llvm::Function *inFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction(*name, inType).getCallee());
+	
+	
     return nullptr;
 }
 
 llvm::Value *Expr::codegen()
 {
-
+	if(evaluable){
+		
+	}
     return nullptr;
 }
 
@@ -590,7 +600,6 @@ void BiExpr::dumpInner(const int i) const
 	std::cout << opNames[op] << std::endl;
 	right->dump(i);
 }
-
 
 void StringExpr::dumpInner(const int i) const
 {
@@ -621,4 +630,24 @@ void Type::dumpInner(const int i) const
 	for (int i = 0; i < dim; i++)
 		std::cout << "[]";
 	std::cout << std::endl;
+}
+
+llvm::Value *Continue::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *Break::codegen()
+{
+    return nullptr;
+}
+
+llvm::Value *Stmt::codegen()
+{
+    return nullptr;
+}
+
+void Unit::unitcodegen()
+{
+	
 }

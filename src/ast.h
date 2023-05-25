@@ -59,7 +59,7 @@ struct CompUnit : BaseAST
 	CompUnit(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
 	void append(Unit *u) {units.emplace_back(std::unique_ptr<Unit>(u));}
 	virtual int typeCheck() const override;
-    void codegen();
+    virtual void unitcodegen();
 protected:
     void dumpInner(const int i) const override;
 };
@@ -93,7 +93,7 @@ struct Expr: BaseAST {
 	float num;
 	Expr() : evaluable(false), num(0) {}
 	Expr(float n) : evaluable(true), num(n) {}
-	llvm::Value *codegen();
+	virtual llvm::Value *codegen();
 protected:
 	virtual void dumpInner(const int i) const override;
     
@@ -177,10 +177,13 @@ protected:
 // Stmt
 struct Item : BaseAST
 {
+	virtual llvm::Value *codegen()=0;
 };
 
 struct Stmt : Item
 {
+	llvm::Value *codegen() override;
+
 };
 
 // value codegen of the last expr
@@ -195,7 +198,7 @@ struct ExprList : Expr, Stmt
 	 * Perform symbol lookup. Declarations are done by Decl class.
 	*/
 	virtual int typeCheck() const override;
-    llvm::Value *codegen();
+    llvm::Value *codegen() override;
 
 protected:
     void dumpInner(const int i) const override
@@ -210,16 +213,17 @@ struct Call : Expr {
 	std::unique_ptr<ExprList> params;
 	Call(std::string *n, ExprList *p) : name(n), params(p) {}
 	virtual int typeCheck() const override;
-    llvm::Value *codegen();
+    llvm::Value *codegen() override;
 };
 
 // block
-struct If : Stmt
-{
+struct If : Stmt{
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
 	If(Expr *e, Stmt *s) : expr(e), stmt(s) {}
 	virtual int typeCheck() const override;
+	llvm::Value *codegen() override;
+
 protected:
 	void dumpInner(const int i) const override
 	{
@@ -236,6 +240,8 @@ struct IfElse : Stmt
 	std::unique_ptr<Stmt> fs;
 	IfElse(Expr *e, Stmt *t, Stmt *f) : expr(e), ts(t), fs(f) {}
 	virtual int typeCheck() const override;
+	llvm::Value *codegen() override;
+
 protected:
 	void dumpInner(const int i) const override
 	{
@@ -252,6 +258,8 @@ struct While : Stmt
 	std::unique_ptr<Stmt> stmt;
 	While(Expr *e, Stmt *s) : expr(e), stmt(s) {}
 	virtual int typeCheck() const override;
+	llvm::Value *codegen() override;
+
 };
 
 // block
@@ -262,6 +270,8 @@ struct For : Stmt
 	std::unique_ptr<Expr> tail;
 	std::unique_ptr<Stmt> body;
 	For(Expr *i, Expr *e, Expr *t, Stmt *b) : init(i), expr(e), tail(t), body(b) {}
+	llvm::Value *codegen() override;
+
 	virtual int typeCheck() const override;
 
 protected:
@@ -279,6 +289,8 @@ struct Return : Stmt
 	std::unique_ptr<Expr> expr;
 	Return(Expr *e) : expr(e) {}
 	virtual int typeCheck() const override;
+	llvm::Value *codegen() override;
+
 
 protected:
 	void dumpInner(const int i) const override;
@@ -286,9 +298,13 @@ protected:
 
 struct Break : Stmt
 {
+	llvm::Value *codegen() override;
+
 };
 struct Continue : Stmt
-{
+{	
+	llvm::Value *codegen() override;
+
 };
 
 using ItemList = std::vector<std::unique_ptr<Item>>;
@@ -300,6 +316,7 @@ struct Block : Stmt
 	Block(Item *s) { append(s); }
 	void append(Item *s) {items.emplace_back(std::unique_ptr<Item>(s));}
 	virtual int typeCheck() const override;
+	llvm::Value *codegen() override;
 
 protected:
 	void dumpInner(const int i) const override;
@@ -383,11 +400,12 @@ protected:
 // Unit
 struct Unit : BaseAST
 {
-	virtual void codegen();
+	virtual void unitcodegen();
 };
 
 struct Decl : Unit, Item
 {
+	
 };
 
 struct VarDecl : Decl
@@ -397,6 +415,7 @@ struct VarDecl : Decl
 	VarDecl(Type *t, VarDefs *v) : type(t), vars(v) {}
 	void append(VarDef *v) {vars->emplace_back(std::unique_ptr<VarDef>(v));}
 	virtual int typeCheck() const override;
+	llvm::Value *codegen ()override;
 protected:
 	virtual void dumpInner(const int i) const override;
 };
@@ -411,7 +430,7 @@ struct FunDef : Unit
 	std::unique_ptr<Block> block;
 	FunDef(Type *t, std::string *n, FieldList *f, Block *b) : type(t), name(n), fields(f), block(b) {}
 	FunDef(Type *t, std::string *n, Block *b) : type(t), name(n), fields(new FieldList()), block(b) {}
-    void codegen();
+    void unitcodegen() override;
 	virtual int typeCheck() const override;
 protected:
     void dumpInner(const int i) const override;

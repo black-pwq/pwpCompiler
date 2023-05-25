@@ -52,58 +52,51 @@ main(int argc, const char *argv[])
   
 
   initmodule();
-  ast->codegen();
+  ast->unitcodegen();
 
-  // llvm::SmallVector<llvm::Type *, 1> FuncTyAgrs;
-
-  // FuncTyAgrs.push_back(llvm::Type::getInt32Ty(*TheContext));
-  // auto *FuncTy = llvm::FunctionType::get(llvm::Type::getVoidTy(*TheContext), FuncTyAgrs, false);
-  // auto *FuncFoo = llvm::Function::Create(FuncTy, llvm::Function::ExternalLinkage, "_Z3fooi", TheModule.get());
-
+  
   TheModule->print(llvm::outs(), nullptr);  
-  auto TargetTriple = llvm::sys::getProcessTriple();
-  TargetTriple = "riscv64-unknown-elf";
+  // auto TargetTriple = llvm::sys::getProcessTriple();
+  // TargetTriple = "riscv64-unknown-elf";
   // std::cout << TargetTriple << std::endl;
 
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargets();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-  llvm::InitializeAllAsmPrinters();
+  // llvm::InitializeAllTargetInfos();
+  // llvm::InitializeAllTargets();
+  // llvm::InitializeAllTargetMCs();
+  // llvm::InitializeAllAsmParsers();
+  // llvm::InitializeAllAsmPrinters();
 
 
+  // std::string Error;
+  // auto Target = llvm::TargetRegistry::lookupTarget(TargetTriple, Error);
+  // if (!Target) {
+  //   llvm::errs() << Error;
+  //   return 1;
+  // }
+  // auto CPU = "generic-rv64";
+  // auto Features = "";
 
-
-  std::string Error;
-  auto Target = llvm::TargetRegistry::lookupTarget(TargetTriple, Error);
-  if (!Target) {
-    llvm::errs() << Error;
-    return 1;
-  }
-  auto CPU = "generic-rv64";
-  auto Features = "";
-
-  llvm::TargetOptions opt;
-  auto RM = llvm::Optional<llvm::Reloc::Model>();
-  auto TargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
+  // llvm::TargetOptions opt;
+  // auto RM = llvm::Optional<llvm::Reloc::Model>();
   // auto TargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
-  auto Filename = "output.s";
-  std::error_code EC;
-  llvm::raw_fd_ostream dest(Filename, EC, llvm::sys::fs::OF_None);
+  // // auto TargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
+  // auto Filename = "output.s";
+  // std::error_code EC;
+  // llvm::raw_fd_ostream dest(Filename, EC, llvm::sys::fs::OF_None);
 
-  if (EC) {
-    llvm::errs() << "Could not open file: " << EC.message();
-    return 1;
-  }
-  llvm::legacy::PassManager pass;
-  auto FileType = llvm::CGFT_AssemblyFile;
+  // if (EC) {
+  //   llvm::errs() << "Could not open file: " << EC.message();
+  //   return 1;
+  // }
+  // llvm::legacy::PassManager pass;
+  // auto FileType = llvm::CGFT_AssemblyFile;
 
-  if (TargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
-    llvm::errs() << "TargetMachine can't emit a file of this type";
-    return 1;
-  }
-  pass.run(*TheModule);
-  dest.flush();
+  // if (TargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
+  //   llvm::errs() << "TargetMachine can't emit a file of this type";
+  //   return 1;
+  // }
+  // pass.run(*TheModule);
+  // dest.flush();
 
 
   return 0;

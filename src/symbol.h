@@ -51,6 +51,8 @@ struct SimpleSymbol : VarSymbol
 struct ArraySymbol : VarSymbol
 {
 	ArraySymbol(BType b);
+	ArraySymbol(ArraySymbol &other);
+	ArraySymbol(ArraySymbol *other);
 	virtual int getSize() const override;
 	virtual void dump(FILE *f) const override;
 	virtual void append(const int w) override;
@@ -70,4 +72,12 @@ struct FunSymbol : Symbol
 	void appendType(VarSymbol *s);
 	virtual int getSize() const override;
 	virtual void dump(FILE *f) const override;
+};
+
+template <typename T>
+struct NameSym {
+	std::unique_ptr<std::string> name;
+	T *symbol;
+	NameSym(std::string *n) : name(n) {}
+	NameSym(std::string *n, T *t) : name(n), symbol(t) {}
 };

@@ -12,3 +12,4 @@
 12. expression type mismatch (expected arithmetic)
 13. (base) type conversion fails
 14. (compound) type conversion fails
+15. pointer biop pointer is not allowed

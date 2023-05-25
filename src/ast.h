@@ -74,8 +74,8 @@ protected:
 struct Field : BaseAST
 {
 	std::unique_ptr<Type> type;
-	std::unique_ptr<Var> name;
-	Field(Type *t, Var *n) : type(t), name(n) {}
+	std::unique_ptr<Var> var;
+	Field(Type *t, Var *n) : type(t), var(n) {}
 	virtual int typeCheck() const override;
 
 protected:
@@ -102,7 +102,7 @@ enum BiOp {bi_add, bi_sub, bi_times, bi_divide, bi_and, bi_or, bi_eq, bi_neq, bi
 enum UniOp {uni_plus, uni_minus, uni_not};
 
 struct UniExpr: Expr {
-	UniOp op;
+	const UniOp op;
 	std::unique_ptr<Expr> expr;
 	UniExpr(UniOp o, Expr *e); 
 	virtual int typeCheck() const override;
@@ -112,7 +112,7 @@ protected:
 
 struct BiExpr: Expr {
 	std::shared_ptr<Expr> left; // shared_ptr for binary assignment
-	BiOp op;
+	const BiOp op;
 	std::shared_ptr<Expr> right;
 	BiExpr(Expr *l, BiOp o, Expr *r) ;
 	BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) ;
@@ -260,11 +260,10 @@ protected:
 
 // Var
 struct Var: Expr { 
-	std::unique_ptr<std::string> sym;
+	std::unique_ptr<NameSym<VarSymbol>> nameSym;
 	std::unique_ptr<ExprList> exprs;
-	Var(std::string *s, ExprList *e) : sym(s), exprs(e) {}
+	Var(std::string *s, ExprList *e) : nameSym(new NameSym<VarSymbol>(s)), exprs(e) {}
 	virtual int typeCheck() const = 0;
-	virtual std::string tmpName() const override {return *sym;}
 	// virtual int sizeInWord() const = 0;
 protected:
 	virtual void dumpInner(const int i) const override;
@@ -296,8 +295,8 @@ protected:
 };
 
 struct VarDef : BaseAST {
-	std::unique_ptr<Var> name;
-	VarDef(Var *n) : name(n) {}
+	std::unique_ptr<Var> var;
+	VarDef(Var *n) : var(n) {}
 	// No need to implement typeCheck here, since the type is not associcated in this class.
 	// We check and insert symbols in VarDecl
 protected:
@@ -308,6 +307,11 @@ using VarDefs = std::vector<std::unique_ptr<VarDef>>;
 struct InitVarDef : VarDef {
 	std::unique_ptr<Expr> expr;
 	InitVarDef(Var *n, Expr *e) : VarDef(n), expr(e) {}
+
+	/**
+	 * Type info already inseted into symbol table by VarDecl,
+	 * check if the type of the expression matches the definition.
+	*/
 	virtual int typeCheck() const override;
 protected:
 	virtual void dumpInner(const int i) const override;
@@ -339,9 +343,9 @@ struct Decl : Unit, Item {};
 
 struct VarDecl : Decl {
 	std::unique_ptr<Type> type;
-	std::unique_ptr<VarDefs> vars;
-	VarDecl(Type *t, VarDefs *v) : type(t), vars(v) {}
-	void append(VarDef *v) {vars->emplace_back(std::unique_ptr<VarDef>(v));}
+	std::unique_ptr<VarDefs> vardefs;
+	VarDecl(Type *t, VarDefs *v) : type(t), vardefs(v) {}
+	void append(VarDef *v) {vardefs->emplace_back(std::unique_ptr<VarDef>(v));}
 	virtual int typeCheck() const override;
 protected:
 	virtual void dumpInner(const int i) const override;
@@ -351,11 +355,11 @@ protected:
 struct FunDef : Unit
 {
 	std::unique_ptr<Type> type;
-	std::unique_ptr<std::string> name;
+	std::unique_ptr<NameSym<FunSymbol>> nameSym;
 	std::unique_ptr<FieldList> fields;
 	std::unique_ptr<Block> block;
-	FunDef(Type *t, std::string *n, FieldList *f, Block *b) : type(t), name(n), fields(f), block(b) {}
-	FunDef(Type *t, std::string *n, Block *b) : type(t), name(n), fields(new FieldList()), block(b) {}
+	FunDef(Type *t, std::string *n, FieldList *f, Block *b) : type(t), nameSym(new NameSym<FunSymbol>(n)), fields(f), block(b) {}
+	FunDef(Type *t, std::string *n, Block *b) : type(t), nameSym(new NameSym<FunSymbol>(n)), fields(new FieldList()), block(b) {}
 	virtual int typeCheck() const override;
 protected:
 	void dumpInner(const int i) const override;

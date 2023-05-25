@@ -22,10 +22,19 @@ void SimpleSymbol::append(const int w)
 }
 
 ArraySymbol::ArraySymbol(BType b) : VarSymbol(b), sizeInWord(1)
-
 {
 	assert(b != bt_undef);
 	assert(b != bt_void);
+}
+
+ArraySymbol::ArraySymbol(ArraySymbol &other) : ArraySymbol(other.type) {
+	for(auto e : other.wordsInDim)
+		append(e);
+}
+
+ArraySymbol::ArraySymbol(ArraySymbol *other) : ArraySymbol(other->type) {
+	for(auto e : other->wordsInDim)
+		append(e);
 }
 
 int ArraySymbol::getSize() const

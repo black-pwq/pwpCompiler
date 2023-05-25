@@ -117,7 +117,7 @@ void FunDef::dumpInner(const int i) const
 {
 	type->dump(i);
 	indent(i);
-	cout << *name << endl;
+	cout << *nameSym->name << endl;
 	for (auto &f : *fields)
 		f->dump(i);
 	block->dump(i);
@@ -137,13 +137,13 @@ void Block::dumpInner(const int i) const
 void Field::dumpInner(const int i) const
 {
 	type->dump(i);
-	name->dump(i);
+	var->dump(i);
 }
 
 void VarDecl::dumpInner(const int i) const
 {
 	type->dump(i);
-	for (auto &vardef : *vars)
+	for (auto &vardef : *vardefs)
 	{
 		vardef->dump(i);
 	}
@@ -151,19 +151,19 @@ void VarDecl::dumpInner(const int i) const
 
 void VarDef::dumpInner(const int i) const
 {
-	name->dump(i);
+	var->dump(i);
 }
 
 void Var::dumpInner(const int i) const
 {
 	indent(i);
-	cout << *sym << endl;
+	cout << *nameSym->name << endl;
 }
 
 void ArrayVar::dumpInner(const int i) const
 {
 	indent(i);
-	cout << *sym << endl;
+	cout << *nameSym->name << endl;
 	for (auto &e : exprs->list)
 	{
 		e->dump(i);
@@ -191,7 +191,7 @@ void BiExpr::dumpInner(const int i) const
 	const std::string opNames[] = {"+", "-", "*", "/", "&&", "||", "==", "!=", "<", "<=", ">", ">="};
 	left->dump(i);
 	indent(i);
-	std::cout << opNames[op] << std::endl;
+	std::cout << opNames[op] << " opcode = " << op << std::endl;
 	right->dump(i);
 }
 
@@ -224,6 +224,6 @@ void Type::dumpInner(const int i) const
 
 void InitVarDef::dumpInner(const int i) const
 {
-	name->dump(i);
+	var->dump(i);
 	expr->dump(i);
 }

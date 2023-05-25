@@ -13,6 +13,7 @@ llvm::Value *Return::codegen()
 
 llvm::Value *For::codegen()
 {
+	
     return nullptr;
 }
 
@@ -21,10 +22,29 @@ llvm::Value *For::codegen()
 
 llvm::Value *While::codegen()
 {
-	// llvm::BasicBlock* for_cont = llvm::BasicBlock::Create(*TheContext, "for.cond", F);
-	// llvm::BasicBlock* for_body = llvm::BasicBlock::Create(*TheContext, "for.body", F);
-	// llvm::BasicBlock* for_end = llvm::BasicBlock::Create(*TheContext, "for.end", F);
-	// Builder->CreateBr(for_cont);
+	llvm::BasicBlock* bb = Builder->GetInsertBlock();
+	Builder->SetInsertPoint(bb);
+	auto now = bb->getParent();
+
+
+	llvm::BasicBlock* for_cond = llvm::BasicBlock::Create(*TheContext, "for.cond",now);
+
+	llvm::BasicBlock* for_body = llvm::BasicBlock::Create(*TheContext, "for.body",now);
+
+	llvm::BasicBlock* for_end = llvm::BasicBlock::Create(*TheContext, "for.end",now);
+
+	
+	Builder->CreateBr(for_cond);
+	Builder->SetInsertPoint(for_cond);
+	auto icmp = expr->codegen();
+	Builder->CreateCondBr(icmp, for_body, for_end);
+	Builder->SetInsertPoint(for_body);
+	stmt->codegen();
+	Builder->CreateBr(for_cond);
+	
+	Builder->SetInsertPoint(for_end);
+	
+
     return nullptr;
 }
 
@@ -40,12 +60,29 @@ llvm::Value *IfElse::codegen()
 
 llvm::Value *If::codegen()
 {
+	llvm::BasicBlock* bb = Builder->GetInsertBlock();
+	Builder->SetInsertPoint(bb);
+	auto now = bb->getParent();
+
+
+	llvm::BasicBlock* for_cond = llvm::BasicBlock::Create(*TheContext, "if.cond",now);
+
+	llvm::BasicBlock* for_body = llvm::BasicBlock::Create(*TheContext, "if.body",now);
+
+	llvm::BasicBlock* for_end = llvm::BasicBlock::Create(*TheContext, "if.end",now);
+
 	
+	Builder->CreateBr(for_cond);
+	Builder->SetInsertPoint(for_cond);
+	auto icmp = expr->codegen();
+	Builder->CreateCondBr(icmp, for_body, for_end);
+	Builder->SetInsertPoint(for_body);
+	stmt->codegen();
+	Builder->CreateBr(for_end);
+	
+	Builder->SetInsertPoint(for_end);
     return nullptr;
 }
-
-
-
 
 
 
@@ -53,11 +90,6 @@ llvm::Value *Block::codegen()
 {
     return nullptr;
 }
-
-
-
-
-
 
 
 
@@ -245,11 +277,16 @@ void FunDef::unitcodegen()
 
 	llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
   	Builder->SetInsertPoint(BB);
+
 	for (int i = 0;i < block->items.size();i++){
+		// std::cout << block->items.size() << "dddddddd";
 		*block->items[i]->codegen();
 	}
 
 	
+	// std::cout <<"start11*****************"<<std::endl;
+
+
 	if(*nameSym->name == "main"){
 		Builder->CreateRet(llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*TheContext),0));
 
@@ -437,6 +474,10 @@ llvm::Value *Expr::codegen()
 
 llvm::Value *ExprList::codegen()
 {
+
+		std::cout << "stm!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		std::cout << list.size()<< std::endl;
+
 	for (int i =0 ;i < list.size();i++){
 		list[i]->codegen();
 	}
@@ -494,6 +535,7 @@ llvm::Value *Break::codegen()
 
 llvm::Value *Stmt::codegen()
 {
+	std::cout << "stm!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     return nullptr;
 }
 
@@ -604,7 +646,7 @@ void ArrayVar::vardefwithoutinit(BType bt)
 
 llvm::Value *Assign::codegen()
 {
-	
+	std::cout << "assign " << std::endl;
 	auto vars = var->codegen();
 	auto value = expr->codegen();
 	return Builder->CreateStore(value,vars);
@@ -623,6 +665,7 @@ llvm::Value *FloatExpr::codegen()
 	return  llvm::ConstantFP::get(*TheContext, llvm::APFloat(num));
     return nullptr;
 }
+
 void Call::dumpInner(const int i) const {
 	indent(i);
 	cout << *name << endl;

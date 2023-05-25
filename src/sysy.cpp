@@ -61,6 +61,8 @@ int main(int argc, const char *argv[])
   cout << errtab[errid] << endl;
 
   initmodule();
+
+
   ast->unitcodegen();
 
   

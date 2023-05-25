@@ -47,14 +47,18 @@ int main() {
   // int namec = 1;
   
   int named = 1;
-  int c = 2;
-  while(named<10){
-    named=named+1;
+  // int c = 2;
+  // while(named<10){
+  //   named=named+1;
+  // }
+  // while(named<2){
+  //   named = 2;
+  // }
+  if(named == 2){
+    named = 1;
+    named = 3;
   }
-  // named = 2+3;
-  // named = c+1;
-  int cmp = (named==1);
-  named = cmp;
-  // namec;
+
+  // named = 2;
   return 0;
 }

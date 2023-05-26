@@ -40,6 +40,12 @@
 
 int main() {
   int a[10];
-  a[10]= 1;
+  int k = 1;
+  k = 3;
+
+  int name;
+  name = k;
+  a[2] = 1;
+  // a[0]  =1;
   return 0;
 }

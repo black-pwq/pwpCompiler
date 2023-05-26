@@ -73,6 +73,7 @@ int main(int argc, const char *argv[])
     cout << "err lineno = " << res << endl;
   cout << errtab[errid] << endl;
 
+
   initmodule();
   initiostream();
 

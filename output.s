@@ -29,6 +29,12 @@ main:
 	.cfi_startproc
 	addi	sp, sp, -48
 	.cfi_def_cfa_offset 48
+	li	a0, 3
+	sw	a0, 4(sp)
+	ld	a0, 4(sp)
+	sd	a0, 0(sp)
+	li	a0, 1
+	sw	a0, 16(sp)
 	li	a0, 0
 	addi	sp, sp, 48
 	ret

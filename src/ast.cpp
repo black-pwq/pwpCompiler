@@ -542,8 +542,9 @@ llvm::Value *Call::codegen()
 }
 
 llvm::Value *Expr::codegen()
-{
-	
+{	
+
+
     return nullptr;
 }
 
@@ -627,9 +628,10 @@ void InitVarDef::dumpInner(const int i) const
 
 llvm::Value * SimpleVar::codegen()
 {
-	std::cout << *nameSym->name << std::endl;
 	// assert(nameSym->symbol);
-	if(nameSym->symbol->type == bt_int){
+	// assert(nameSym->symbol);
+	// std::cout << nameSym->symbol->type << std::endl;
+	//   if(nameSym->symbol->type == bt_int){
 		// std::cout << "this" << std::endl;
 		// if(evaluable == 1){
 		// 	auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
@@ -639,19 +641,20 @@ llvm::Value * SimpleVar::codegen()
 		// else{
 			
 
-		auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
+		// auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
 		// TheContext
 		llvm::BasicBlock* bb = Builder->GetInsertBlock();
 		auto stable = bb->getValueSymbolTable();
 		auto fin = stable->lookup(*nameSym->name);
-		return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,*nameSym->name+"itmp");
+			// std::cout << "dfsjsdjlfaewjfawe" << std::endl;
+		return Builder->CreateLoad(fin->getType(),fin,*nameSym->name+"itmp");
 
     				
-	}
+	// }
 	
-	else if(nameSym->symbol->type == bt_float){
-		std::cout << "this" << std::endl;
-	}
+	// else if(nameSym->symbol->type == bt_float){
+	// 	std::cout << "this" << std::endl;
+	// }
 
 	return nullptr;
 }
@@ -659,24 +662,31 @@ llvm::Value * SimpleVar::codegen()
 
 llvm::Value *ArrayVar::codegen()
 {
-	std::cout << *nameSym->name << std::endl;
+	std::cout << "array var codegen " << std::endl;
+
 	// assert(nameSym->symbol);
 	if(nameSym->symbol->type == bt_int){
 
 		// auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
-		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),nameSym->symbol->wordsInDim[0]);
+
+		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),10);
+
+
 		// TheContext
 		llvm::BasicBlock* bb = Builder->GetInsertBlock();
+
 		auto stable = bb->getValueSymbolTable();
+
 		auto fin = stable->lookup(*nameSym->name);
 
 
 		std::vector<llvm::Value*> Idxs;
-		llvm::Value *itmp1 = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),exprs->list[0]->codegen(),"i__tmp");
+		llvm::Value *itmp1 = exprs->list[0]->codegen();
 		
 		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
 		Idxs.push_back(itmp1);
 		llvm::Value* array_i = Builder->CreateGEP(ty,fin, Idxs,"array_i");
+
 		return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),array_i,*nameSym->name+"itmp");
 
     				
@@ -699,6 +709,7 @@ void InitArrayDef::valuedef(BType bt)
 
 
 }
+
 void InitVarDef::valuedef(BType bt)
 {
 	std::cout << "var init!!!!!!!!!!!!" << std::endl;
@@ -760,34 +771,38 @@ llvm::Value *Var::addrgen()
 
 llvm::Value *ArrayVar::addrgen()
 {
-	std::cout << "get arrayvar   " << std::endl;
+	std::cout << "get array var   " << std::endl;
 
 	if(nameSym->symbol->type == bt_int){
+		std::cout << "you are int array" << std::endl;
+
+		
+		llvm::BasicBlock* bb = Builder->GetInsertBlock();
+		
+		auto stable = bb->getValueSymbolTable();
+
+		auto fin = stable->lookup(*nameSym->name);
+
+
+		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),10);
+		
+		std::vector<llvm::Value*> Idxs;
+
+
+		std::cout << "" << std::endl;
+
+		llvm::Value *itmp1 = exprs->list[0]->codegen();
 
 		std::cout << "you are int array" << std::endl;
-		std::cout << *nameSym->name << std::endl;
-		// auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
-		assert(nameSym->symbol->wordsInDim.size());
-		std::cout << "dim 1 ==  "<<nameSym->symbol->wordsInDim[0] << std::endl;
 
-		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), nameSym->symbol->wordsInDim[0]);
-		std::cout << "dim 1 ==  "<<nameSym->symbol->wordsInDim[0] << std::endl;
-		llvm::BasicBlock* bb = Builder->GetInsertBlock();
-		auto stable = bb->getValueSymbolTable();
-		auto fin = stable->lookup(*nameSym->name);
-		// return fin;
-		std::vector<llvm::Value*> Idxs;
-		llvm::Value *itmp1 = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),exprs->list[0]->codegen(),"i__tmp");
-		
 		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
+
 		Idxs.push_back(itmp1);
+
 		llvm::Value* array_i = Builder->CreateGEP(ty,fin, Idxs,"array_i");
 
 		return array_i;	
-    				
-		// return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
-		// TheContext
-    	
+
 	}
 	
 	else if(nameSym->symbol->type == bt_float){

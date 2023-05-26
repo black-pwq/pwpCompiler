@@ -208,12 +208,8 @@ protected:
 struct While : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
-	While(Expr *e, Stmt *s) : expr(e), stmt(s), tn(std::string("@loop") + std::to_string(t++)) {}
+	While(Expr *e, Stmt *s) : expr(e), stmt(s) {}
 	virtual int typeCheck() const override;
-	const std::string &tmpName() const {return tn;}
-private:
-	static int t;
-	const std::string tn;
 };
 
 struct For : Stmt {
@@ -221,15 +217,11 @@ struct For : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Expr> tail;
 	std::unique_ptr<Stmt> body;
-	For(Expr *i, Expr *e, Expr *tl, Stmt *b) : init(i), expr(e), tail(tl), body(b), tn(std::string("@loop") + std::to_string(t++)) {}
+	For(Expr *i, Expr *e, Expr *tl, Stmt *b) : init(i), expr(e), tail(tl), body(b) {}
 	virtual int typeCheck() const override;
-	const std::string &tmpName() const {return tn;}
 
 protected:
 	void dumpInner(const int i) const override;
-private:
-	static int t;
-	const std::string tn;
 };
 
 
@@ -243,8 +235,12 @@ protected:
 	void dumpInner(const int i) const override;
 };
 
-struct Break : Stmt {};
-struct Continue : Stmt {};
+struct Break : Stmt {
+	virtual int typeCheck() const override;
+};
+struct Continue : Stmt {
+	virtual int typeCheck() const override;
+};
 
 using ItemList = std::vector<std::unique_ptr<Item>>;
 

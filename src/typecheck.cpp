@@ -4,6 +4,9 @@ using namespace std;
 int errid;
 SymTab varSt;
 SymTab funSt;
+static const int loop_mark = 1;
+static const int fun_entry_mark = 2;
+static list<int> control_tab = {0};
 
 static bool is_arith_type(BType t)
 {
@@ -202,10 +205,9 @@ int For::typeCheck() const
 		return errline;
 	if ((errline = tail->typeCheck()))
 		return errline;
-	varSt.openScope();
-	varSt.insert(tmpName(), nullptr);
+	control_tab.push_back(loop_mark);
 	errline = body->typeCheck();
-	varSt.closeScope();
+	control_tab.pop_back();
 	return errline;
 }
 int While::typeCheck() const
@@ -213,7 +215,10 @@ int While::typeCheck() const
 	int errline = expr->typeCheck();
 	if (errline)
 		return errline;
-	return stmt->typeCheck();
+	control_tab.push_back(loop_mark);
+	errline = stmt->typeCheck();
+	control_tab.pop_back();
+	return errline;
 }
 
 int IfElse::typeCheck() const
@@ -224,6 +229,18 @@ int IfElse::typeCheck() const
 	if ((errline = ts->typeCheck()))
 		return errline;
 	return fs->typeCheck();
+}
+
+int Break::typeCheck() const {
+	if(control_tab.back() != loop_mark)
+		return errid = 20, lineno;
+	return 0;
+}
+
+int Continue::typeCheck() const {
+	if(control_tab.back() != loop_mark)
+		return errid = 21, lineno;
+	return 0;
 }
 
 int If::typeCheck() const
@@ -300,6 +317,7 @@ int Block::typeCheck() const
 int FunDef::typeCheck() const
 {
 	int errline;
+	control_tab.push_back(fun_entry_mark);
 	varSt.openScope();
 
 	FunSymbol *s = new FunSymbol(type->btype);
@@ -318,6 +336,7 @@ int FunDef::typeCheck() const
 	nameSym->symbol = s;
 	errline = block->typeCheck();
 	varSt.closeScope();
+	control_tab.pop_back();
 	return errline;
 }
 

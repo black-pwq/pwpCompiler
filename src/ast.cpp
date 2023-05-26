@@ -2,8 +2,6 @@
 using namespace std;
 
 int Expr::t;
-int While::t;
-int For::t;
 
 static float eval_bi(int l, BiOp op, int r)
 {

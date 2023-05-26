@@ -280,14 +280,11 @@ struct For : Stmt
 
 	virtual int typeCheck() const override;
 
+
+	
+
 protected:
-	void dumpInner(const int i) const override
-	{
-		init->dump(i);
-		expr->dump(i);
-		tail->dump(i);
-		body->dump(i);
-	}
+	void dumpInner(const int i) const override;
 };
 
 struct Return : Stmt
@@ -304,11 +301,13 @@ protected:
 
 struct Break : Stmt
 {
+	virtual int typeCheck() const override;
 	llvm::Value *codegen() override;
 
 };
 struct Continue : Stmt
 {	
+	virtual int typeCheck() const override;
 	llvm::Value *codegen() override;
 
 };

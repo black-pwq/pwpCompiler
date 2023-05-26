@@ -863,4 +863,9 @@ void Call::dumpInner(const int i) const {
 	params->Expr::dump(i);
 }
 
-
+void For::dumpInner(const int i) const {
+	init->dump(i);
+	expr->dump(i);
+	tail->dump(i);
+	body->dump(i);
+}

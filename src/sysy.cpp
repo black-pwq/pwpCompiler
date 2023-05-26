@@ -35,6 +35,8 @@ std::string errtab[] = {
     "parameter (base) type mismatch",
     "parameter (compound) type mismatch",
     "binary operations on offset of pointers are not allowed except add/sub",
+    "break outside loop",
+    "continue outside loop",
 };
 
 int main(int argc, const char *argv[])

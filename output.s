@@ -27,33 +27,10 @@ putint:
 	.type	main,@function
 main:
 	.cfi_startproc
-	addi	sp, sp, -16
-	.cfi_def_cfa_offset 16
-	sd	ra, 8(sp)
-	.cfi_offset ra, -8
-	li	a0, 1
-	sw	a0, 4(sp)
-	li	a0, 111
-	sw	a0, 0(sp)
-.LBB1_1:
-	lw	a0, 4(sp)
-	lw	a1, 0(sp)
-	slt	a1, a0, a1
-	xori	a1, a1, 1
-	addi	a0, a0, -10
-	seqz	a0, a0
-	or	a0, a1, a0
-	bnez	a0, .LBB1_3
-	lw	a0, 4(sp)
-	call	putint@plt
-	lw	a0, 4(sp)
-	addiw	a0, a0, 1
-	sw	a0, 4(sp)
-	j	.LBB1_1
-.LBB1_3:
+	addi	sp, sp, -48
+	.cfi_def_cfa_offset 48
 	li	a0, 0
-	ld	ra, 8(sp)
-	addi	sp, sp, 16
+	addi	sp, sp, 48
 	ret
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

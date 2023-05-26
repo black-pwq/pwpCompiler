@@ -37,17 +37,9 @@
 //         QuickSort(arr, i + 1, high);    // 排序k右边
 //     }
 // }
- 
-
-
 
 int main() {
-
-  int name = 1;
-  int k = 111;
-  while(name < k && name != 10){
-    
-    putint(name);
-    name=name+1;
-  }
+  int a[10];
+  a[10]= 1;
+  return 0;
 }

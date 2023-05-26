@@ -208,8 +208,12 @@ protected:
 struct While : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Stmt> stmt;
-	While(Expr *e, Stmt *s) : expr(e), stmt(s) {}
+	While(Expr *e, Stmt *s) : expr(e), stmt(s), tn(std::string("@loop") + std::to_string(t++)) {}
 	virtual int typeCheck() const override;
+	const std::string &tmpName() const {return tn;}
+private:
+	static int t;
+	const std::string tn;
 };
 
 struct For : Stmt {
@@ -217,16 +221,15 @@ struct For : Stmt {
 	std::unique_ptr<Expr> expr;
 	std::unique_ptr<Expr> tail;
 	std::unique_ptr<Stmt> body;
-	For(Expr *i, Expr *e, Expr *t, Stmt *b) : init(i), expr(e), tail(t), body(b) {}
+	For(Expr *i, Expr *e, Expr *tl, Stmt *b) : init(i), expr(e), tail(tl), body(b), tn(std::string("@loop") + std::to_string(t++)) {}
 	virtual int typeCheck() const override;
+	const std::string &tmpName() const {return tn;}
 
 protected:
-	void dumpInner(const int i) const override {
-		init->dump(i);
-		expr->dump(i);
-		tail->dump(i);
-		body->dump(i);
-	}
+	void dumpInner(const int i) const override;
+private:
+	static int t;
+	const std::string tn;
 };
 
 

@@ -29,6 +29,11 @@ static int check_var_expr_type(const VarSymbol *vs, const VarSymbol *es)
 		return errid = 14;
 	return 0;
 }
+static VarSymbol *look_up(const string &name)  {
+	VarSymbol *vs = static_cast<VarSymbol *>(varSt.lookup(name));
+	assert(vs);
+	return vs;
+}
 
 /**
  * Type info already inseted into symbol table by VarDecl,
@@ -70,10 +75,8 @@ int BiExpr::typeCheck() const
 	if ((errline = right->typeCheck()))
 		return errline;
 
-	VarSymbol *ls = static_cast<VarSymbol *>(varSt.lookup(left->tmpName()));
-	VarSymbol *rs = static_cast<VarSymbol *>(varSt.lookup(right->tmpName()));
-	assert(ls);
-	assert(rs);
+	auto ls = look_up(left->tmpName());
+	auto rs = look_up(left->tmpName());
 	// both base type
 	if (ls->wordsInDim.size() == 0 && rs->wordsInDim.size() == 0)
 	{
@@ -151,7 +154,7 @@ int UniExpr::typeCheck() const
 	if (errline)
 		return errline;
 	// we assume only basic types are allowed, i.e. compound types like pointers are not in consideration
-	VarSymbol *s = static_cast<VarSymbol *>(varSt.lookup(expr->tmpName()));
+	auto s = look_up(expr->tmpName());
 	if (op == UniOp::uni_not)
 		if (s->type != BType::bt_bool)
 			return errid = 11, expr->lineno;
@@ -199,7 +202,11 @@ int For::typeCheck() const
 		return errline;
 	if ((errline = tail->typeCheck()))
 		return errline;
-	return body->typeCheck();
+	varSt.openScope();
+	varSt.insert(tmpName(), nullptr);
+	errline = body->typeCheck();
+	varSt.closeScope();
+	return errline;
 }
 int While::typeCheck() const
 {
@@ -250,8 +257,7 @@ int Call::typeCheck() const
 	auto &exprs = params->list;
 	for (std::vector<std::unique_ptr<Expr>>::size_type i = 0; i < params->list.size(); ++i)
 	{
-		auto es = static_cast<VarSymbol *>(varSt.lookup(exprs[i]->tmpName()));
-		assert(es);
+		auto es = look_up(exprs[i]->tmpName());
 		if (es->type != s->types[i]->type)
 			return errid = 17, exprs[i]->lineno;
 		else if (es->wordsInDim.size() != s->types[i]->wordsInDim.size())
@@ -262,6 +268,8 @@ int Call::typeCheck() const
 		}
 		// else ok
 	}
+	// insert tmp expr to symtab
+	varSt.insert(tmpName(), new SimpleSymbol(s->type));
 	return 0;
 }
 
@@ -460,6 +468,7 @@ int VarDecl::typeCheck() const
 		// insert the declared symbol into symbol table
 		assert(s != nullptr);
 		auto r = varSt.insert(*var->nameSym->name, s);
+		// redefinition if the variable already exists in the curr scope
 		if (r != s)
 			return errid = 3, Unit::lineno;
 		// type info of the variable is inserted to the symbol table,

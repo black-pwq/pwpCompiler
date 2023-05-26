@@ -2,6 +2,8 @@
 using namespace std;
 
 int Expr::t;
+int While::t;
+int For::t;
 
 static float eval_bi(int l, BiOp op, int r)
 {
@@ -228,4 +230,11 @@ void Call::dumpInner(const int i) const {
 	indent(i);
 	cout << *name << endl;
 	params->Expr::dump(i);
+}
+
+void For::dumpInner(const int i) const {
+	init->dump(i);
+	expr->dump(i);
+	tail->dump(i);
+	body->dump(i);
 }

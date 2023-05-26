@@ -23,26 +23,33 @@ llvm::Value *For::codegen()
 llvm::Value *While::codegen()
 {
 	llvm::BasicBlock* bb = Builder->GetInsertBlock();
+	
 	Builder->SetInsertPoint(bb);
+
 	auto now = bb->getParent();
 
+	llvm::BasicBlock* while_cond = llvm::BasicBlock::Create(*TheContext, "while.cond",now);
 
-	llvm::BasicBlock* for_cond = llvm::BasicBlock::Create(*TheContext, "for.cond",now);
+	llvm::BasicBlock* while_body = llvm::BasicBlock::Create(*TheContext, "while.body",now);
 
-	llvm::BasicBlock* for_body = llvm::BasicBlock::Create(*TheContext, "for.body",now);
-
-	llvm::BasicBlock* for_end = llvm::BasicBlock::Create(*TheContext, "for.end",now);
+	llvm::BasicBlock* while_end = llvm::BasicBlock::Create(*TheContext, "while.end",now);
 
 	
-	Builder->CreateBr(for_cond);
-	Builder->SetInsertPoint(for_cond);
+	Builder->CreateBr(while_cond);
+	
+	Builder->SetInsertPoint(while_cond);
+	
 	auto icmp = expr->codegen();
-	Builder->CreateCondBr(icmp, for_body, for_end);
-	Builder->SetInsertPoint(for_body);
-	stmt->codegen();
-	Builder->CreateBr(for_cond);
 	
-	Builder->SetInsertPoint(for_end);
+	Builder->CreateCondBr(icmp, while_body, while_end);
+
+	Builder->SetInsertPoint(while_body);
+	
+	stmt->codegen();
+
+	Builder->CreateBr(while_cond);
+	
+	Builder->SetInsertPoint(while_end);
 	
 
     return nullptr;
@@ -61,9 +68,10 @@ llvm::Value *IfElse::codegen()
 llvm::Value *If::codegen()
 {
 	llvm::BasicBlock* bb = Builder->GetInsertBlock();
+	
 	Builder->SetInsertPoint(bb);
+	
 	auto now = bb->getParent();
-
 
 	llvm::BasicBlock* for_cond = llvm::BasicBlock::Create(*TheContext, "if.cond",now);
 
@@ -71,16 +79,22 @@ llvm::Value *If::codegen()
 
 	llvm::BasicBlock* for_end = llvm::BasicBlock::Create(*TheContext, "if.end",now);
 
-	
 	Builder->CreateBr(for_cond);
+	
 	Builder->SetInsertPoint(for_cond);
+	
 	auto icmp = expr->codegen();
+	
 	Builder->CreateCondBr(icmp, for_body, for_end);
+	
 	Builder->SetInsertPoint(for_body);
+	
 	stmt->codegen();
+	
 	Builder->CreateBr(for_end);
 	
 	Builder->SetInsertPoint(for_end);
+   
     return nullptr;
 }
 
@@ -88,6 +102,9 @@ llvm::Value *If::codegen()
 
 llvm::Value *Block::codegen()
 {
+	for (int i = 0 ; i < items.size();i++){
+		items[i]->codegen();
+	}
     return nullptr;
 }
 
@@ -211,8 +228,6 @@ void FunDef::unitcodegen()
 	std::vector<llvm::Type*> field;
 
 	if(fields->size()>0){
-
-	
 		for (int i = 0; i<fields->size(); ++i)
 		{
 			BType arty = ((*fields)[i]->type->btype);
@@ -396,7 +411,9 @@ llvm::Value *UniExpr::codegen()
 		return opnd;
 	}
 	else if(op == uni_minus){
-		
+
+		auto fin =  Builder->CreateNeg(opnd);
+		return fin;
 		// return Builder->create;
 	}
 	else if(op == uni_not){
@@ -409,15 +426,54 @@ llvm::Value *UniExpr::codegen()
 llvm::Value *BiExpr::codegen()
 {
 
-	llvm::Value *L = left->codegen();
-	llvm::Value *R = right->codegen();
+	llvm::Value *Lptr = left->codegen();
+	llvm::Value *Rptr = right->codegen();
 
-	auto typeL = L->getType();
-	auto typeR = R->getType();
+	// auto typeL = Lptr->getType();
+	// auto typeR = Rptr->getType();
+	
+	// // if(typeLID == llvm::Type::getInt32PtrTy(*TheContext)->)
+
+	// llvm::Value *L;
+	// llvm::Value *R;
+
+	// if(typeL->isPointerTy()){
+	// 	if(typeL->isFloatingPointTy()){
+	// 		typeL = llvm::Type::getFloatTy(*TheContext);
+	// 	}
+	// 	else{
+
+	// 		typeL = llvm::Type::getInt32Ty(*TheContext);
+
+	// 	}
+	// 	L = Builder->CreateLoad(typeL,Lptr);
+	// }
+	// else{
+	// 	L = Lptr;
+	// }
+
+	// if(typeR->isPointerTy()){
+	// 	if(typeR->isFloatingPointTy()){
+	// 		typeR = llvm::Type::getFloatTy(*TheContext);
+	// 	}
+	// 	else{
+	// 		typeR = llvm::Type::getInt32Ty(*TheContext);
+
+	// 	}
+	// 	R = Builder->CreateLoad(typeR,Rptr);
+
+	// }
+	// else{
+	// 	R = Rptr;
+	// }
+
+	auto L = Lptr;
+	auto R = Rptr;
+
 	if (!L || !R)
 		return nullptr;
 	// if(typeL == llvm::Type::DoubleTyID)
-	std::cout << "succ bin"<<std::endl;
+	std::cout << "succ binexpr"<<std::endl;
 	switch (op)
 	{
 		case bi_add:
@@ -454,16 +510,35 @@ llvm::Value *BiExpr::codegen()
 
 llvm::Value *Call::codegen()
 {
-	std::vector<llvm::Type *> inArgs;
 
-    inArgs.push_back(Builder->getVoidTy());
-    llvm::ArrayRef<llvm::Type*>  argsRef2(inArgs);
-	//scanf def
-    llvm::FunctionType *inType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef2, false);
-    llvm::Function *inFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction(*name, inType).getCallee());
+	// llvm::Type* funtp;
+	// std::vector<llvm::Type *> inArgs;
+
+    // inArgs.push_back(Builder->getVoidTy());
 	
-	
-    return nullptr;
+
+	std::vector<llvm::Value *> inpar;
+
+	std::cout<< "found " <<params->list.size()<<std::endl;
+
+	for (int i = 0 ;i < params->list.size();i++){
+
+		auto eachvalue = params->list[i]->codegen();
+
+		std::cout<< i <<std::endl;
+
+		inpar.push_back(eachvalue);
+
+	}
+    // llvm::ArrayRef<llvm::Type*>  argsRef2(inArgs);
+    // llvm::FunctionType *inType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef2, false);
+    // llvm::FunctionCallee inFunc = TheModule->getOrInsertFunction(*name, inType);
+	 llvm::Function *inFunc = (TheModule->getFunction(*name));
+	if(inFunc){
+	}
+
+    return 	Builder->CreateCall(inFunc,inpar);
+	// return nullptr;
 }
 
 llvm::Value *Expr::codegen()
@@ -475,7 +550,7 @@ llvm::Value *Expr::codegen()
 llvm::Value *ExprList::codegen()
 {
 
-		std::cout << "stm!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		std::cout << "exprlist!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 		std::cout << list.size()<< std::endl;
 
 	for (int i =0 ;i < list.size();i++){
@@ -536,6 +611,7 @@ llvm::Value *Break::codegen()
 llvm::Value *Stmt::codegen()
 {
 	std::cout << "stm!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+
     return nullptr;
 }
 
@@ -551,36 +627,40 @@ void InitVarDef::dumpInner(const int i) const
 
 llvm::Value * SimpleVar::codegen()
 {
+	std::cout << *nameSym->name << std::endl;
+	// assert(nameSym->symbol);
 	if(nameSym->symbol->type == bt_int){
-		if(evaluable == 1){
-			auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
-			llvm::Constant *i32_val = llvm::ConstantInt::get(ty,(int)(num), true);
-			return i32_val;
-		} 
-		else{
-			auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
-			// TheContext
-			llvm::BasicBlock* bb = Builder->GetInsertBlock();
-			auto stable = bb->getValueSymbolTable();
-			auto fin = stable->lookup(*nameSym->name);
-			return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
-			// TheContext
-    		
+		// std::cout << "this" << std::endl;
+		// if(evaluable == 1){
+		// 	auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
+		// 	llvm::Constant *i32_val = llvm::ConstantInt::get(ty,(int)(num), true);
+		// 	return i32_val;
+		// } 
+		// else{
+			
 
-		}
+		auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
+		// TheContext
+		llvm::BasicBlock* bb = Builder->GetInsertBlock();
+		auto stable = bb->getValueSymbolTable();
+		auto fin = stable->lookup(*nameSym->name);
+		return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,*nameSym->name+"itmp");
+		// return fin;
+		// TheContext
+    				
 	}
-	else if(nameSym->symbol->type == bt_int){
-
-	}
+	
 	else if(nameSym->symbol->type == bt_float){
-		
+		std::cout << "this" << std::endl;
 	}
+
 	return nullptr;
 }
 
 
 llvm::Value *ArrayVar::codegen()
 {
+
     return nullptr;
 }
 
@@ -590,13 +670,15 @@ void InitArrayDef::valuedef(BType bt)
 }
 void InitVarDef::valuedef(BType bt)
 {
+	std::cout << "init!!!!!!!!!!!!" << std::endl;
+
 	var->vardefwithoutinit(bt);
 	llvm::BasicBlock* bb = Builder->GetInsertBlock();
 	auto stable = bb->getValueSymbolTable();
 	auto fin = stable->lookup(*var->nameSym->name);
-	auto vars = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
+	// auto vars = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
 	auto value = expr->codegen();
-	Builder->CreateStore(value,vars);
+	Builder->CreateStore(value,fin);
 
 }
 
@@ -625,6 +707,7 @@ void SimpleVar::vardefwithoutinit(BType bt)
 	}
 }
 
+
 void ArrayVar::vardefwithoutinit(BType bt)
 {
 	switch (bt)
@@ -644,14 +727,62 @@ void ArrayVar::vardefwithoutinit(BType bt)
 	}
 }
 
+llvm::Value *Var::addrgen()
+{
+    return nullptr;
+}
+
+llvm::Value *ArrayVar::addrgen()
+{
+	if(nameSym->symbol->type == bt_int){
+		
+		// auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
+		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), );
+		llvm::BasicBlock* bb = Builder->GetInsertBlock();
+		auto stable = bb->getValueSymbolTable();
+		auto fin = stable->lookup(*nameSym->name);
+		return fin;
+		// return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
+		// TheContext
+    	
+	}
+	
+	else if(nameSym->symbol->type == bt_float){
+		
+	}
+    return nullptr;
+}
+
+llvm::Value *SimpleVar::addrgen()
+{
+	if(nameSym->symbol->type == bt_int){
+		
+		auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
+		llvm::BasicBlock* bb = Builder->GetInsertBlock();
+		auto stable = bb->getValueSymbolTable();
+		auto fin = stable->lookup(*nameSym->name);
+		return fin;
+		// return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
+		// TheContext
+    	
+	}
+	
+	else if(nameSym->symbol->type == bt_float){
+		
+	}
+    return nullptr;
+}
+
+
 llvm::Value *Assign::codegen()
 {
-	std::cout << "assign " << std::endl;
-	auto vars = var->codegen();
+	std::cout << "assign!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+
+	auto vars = var->addrgen();
 	auto value = expr->codegen();
 	return Builder->CreateStore(value,vars);
-    
 }
+
 
 llvm::Value *IntExpr::codegen()
 {
@@ -660,14 +791,18 @@ llvm::Value *IntExpr::codegen()
     return nullptr;
 }
 
+
 llvm::Value *FloatExpr::codegen()
 {
 	return  llvm::ConstantFP::get(*TheContext, llvm::APFloat(num));
     return nullptr;
 }
 
+
 void Call::dumpInner(const int i) const {
 	indent(i);
 	cout << *name << endl;
 	params->Expr::dump(i);
 }
+
+

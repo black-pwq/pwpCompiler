@@ -18,6 +18,54 @@ void initmodule()
 
 void initiostream()
 {
-  
+
+    initgetfloat();
+    initgetint();
+    initputfloat();
+    initputint();
 }
 
+
+void initgetfloat(){
+
+}
+
+void initgetint(){
+
+}
+
+void initputint(){
+
+    std::vector<llvm::Type*> field;
+    field.push_back(llvm::Type::getInt32Ty(*TheContext));
+	  auto ft = llvm::FunctionType::get(llvm::Type::getVoidTy(*TheContext),field,false);
+  	llvm::Function *F = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "putint", TheModule.get());
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
+  	Builder->SetInsertPoint(BB);
+
+    // llvm::AllocaInst *allocDeclrInt = Builder->CreateAlloca(llvm::IntegerType::getInt32Ty(*TheContext), NULL, "a");
+
+    // llvm::Value *itmp = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),F->getArg(0),"itmp");
+
+    // find the function printf
+    std::vector<llvm::Type *> putsArgs;
+    putsArgs.push_back(Builder->getInt8Ty()->getPointerTo());
+    llvm::ArrayRef<llvm::Type*>  argsRef(putsArgs);
+    llvm::FunctionType *putsType =llvm::FunctionType::get(Builder->getInt32Ty(), argsRef, true);
+    llvm::Function *putsFunc = llvm::dyn_cast<llvm::Function>(TheModule->getOrInsertFunction("printf", putsType).getCallee());
+    
+    //setting the field of the printf
+    std::vector<llvm::Value*> field4;
+	  field4.push_back(Builder->CreateGlobalStringPtr("%d\n"));
+	  field4.push_back(F->getArg(0));
+    Builder->CreateCall(putsFunc,field4);
+	  
+	
+    Builder->CreateRetVoid();
+}
+
+void initputfloat(){
+    //def of putfloat
+
+	  
+}

@@ -331,11 +331,13 @@ protected:
 // Var
 struct Var: Expr { 
 
+
 	std::unique_ptr<NameSym<VarSymbol>> nameSym;
 	std::unique_ptr<ExprList> exprs;
 	Var(std::string *s, ExprList *e) : nameSym(new NameSym<VarSymbol>(s)), exprs(e) {}
 	virtual int typeCheck() const = 0;
 	virtual void vardefwithoutinit(BType bt) = 0;
+	virtual llvm::Value * addrgen();
 	// virtual int sizeInWord() const = 0;
 protected:
 	virtual void dumpInner(const int i) const override;
@@ -352,6 +354,8 @@ struct SimpleVar: Var {
 	*/
 	virtual int typeCheck() const override;
 	void vardefwithoutinit(BType bt) override;
+	llvm::Value * addrgen() override;
+
 	// virtual int sizeInWord() const {return 1;}
 	// dumpInner inherited from Var
 };
@@ -368,6 +372,8 @@ struct ArrayVar: Var {
 	void vardefwithoutinit(BType bt) override;
 
 	virtual int typeCheck() const override;
+	llvm::Value * addrgen() override;
+
 
 	// virtual int sizeInWord() const override;
 protected:

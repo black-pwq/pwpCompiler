@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <map>
+#include <vector>
 
 // static std::unique_ptr<llvm::LLVMContext> TheContext;
 // static std::unique_ptr<llvm::Module> TheModule;
@@ -40,3 +41,10 @@ void initmodule();
 
 void initiostream();
 
+void initgetint();
+
+void initgetfloat();
+
+void initputfloat();
+
+void initputint();

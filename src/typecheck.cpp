@@ -205,6 +205,7 @@ int For::typeCheck() const
 		return errline;
 	return body->typeCheck();
 }
+
 int While::typeCheck() const
 {
 	int errline = expr->typeCheck();
@@ -234,7 +235,7 @@ int If::typeCheck() const
 int Call::typeCheck() const
 {
 	// predifined vararg funcion
-	if (*name == "printf" || *name == "scanf")
+	if (*name == "printf" || *name == "scanf"  )
 		return 0;
 	FunSymbol *s = static_cast<FunSymbol *>(funSt.lookup(*name));
 	// check if the function is defined

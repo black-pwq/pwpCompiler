@@ -32,7 +32,7 @@ static int check_var_expr_type(const VarSymbol *vs, const VarSymbol *es)
 		return errid = 14;
 	return 0;
 }
-static VarSymbol *look_up(const string &name)  {
+static VarSymbol *look_up_var(const string &name)  {
 	VarSymbol *vs = static_cast<VarSymbol *>(varSt.lookup(name));
 	assert(vs);
 	return vs;
@@ -81,8 +81,11 @@ int BiExpr::typeCheck() const
 	if ((errline = right->typeCheck()))
 		return errline;
 
-	auto ls = look_up(left->tmpName());
-	auto rs = look_up(left->tmpName());
+	auto ls = look_up_var(left->tmpName());
+	auto rs = look_up_var(left->tmpName());
+	// void type
+	if(ls->type == BType::bt_void || rs->type == BType::bt_void)
+		return errid = 22, left->lineno;
 	// both base type
 	if (ls->wordsInDim.size() == 0 && rs->wordsInDim.size() == 0)
 	{
@@ -160,7 +163,7 @@ int UniExpr::typeCheck() const
 	if (errline)
 		return errline;
 	// we assume only basic types are allowed, i.e. compound types like pointers are not in consideration
-	auto s = look_up(expr->tmpName());
+	auto s = look_up_var(expr->tmpName());
 	if (op == UniOp::uni_not)
 		if (s->type != BType::bt_bool)
 			return errid = 11, expr->lineno;
@@ -279,7 +282,7 @@ int Call::typeCheck() const
 	auto &exprs = params->list;
 	for (std::vector<std::unique_ptr<Expr>>::size_type i = 0; i < params->list.size(); ++i)
 	{
-		auto es = look_up(exprs[i]->tmpName());
+		auto es = look_up_var(exprs[i]->tmpName());
 		if (es->type != s->types[i]->type)
 			return errid = 17, exprs[i]->lineno;
 		else if (es->wordsInDim.size() != s->types[i]->wordsInDim.size())

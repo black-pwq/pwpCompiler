@@ -37,6 +37,7 @@ std::string errtab[] = {
     "binary operations on offset of pointers are not allowed except add/sub",
     "break outside loop",
     "continue outside loop",
+    "void type is not allowed for expression",
 };
 
 int main(int argc, const char *argv[])

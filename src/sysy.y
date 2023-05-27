@@ -195,7 +195,7 @@ FunFPVar
 FunFP
   :                     {$$ = new FieldList();}
   | BType FunFPVar      {$$ = new FieldList(); $$->emplace_back(unique_ptr<Field>(new Field($1, $2)));}
-  | FunFP ',' BType Var {$1->emplace_back(unique_ptr<Field>(new Field($3, $4))); $$ = $1;}
+  | FunFP ',' BType FunFPVar {$1->emplace_back(unique_ptr<Field>(new Field($3, $4))); $$ = $1;}
   ;
 
 FunRP

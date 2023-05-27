@@ -190,7 +190,7 @@ FunDef
 FunFPVar
   : Var   {$$ = $1;}
   | IDENT '[' ']'       {auto e = new ExprList(new IntExpr(1)); $$ = new ArrayVar($1, e);}
-  | IDENT '[' ']' SquareExprList {$4->insert(new IntExpr(0)); $$ = new ArrayVar($1, $4);}
+  | IDENT '[' ']' SquareExprList {$4->insert(new IntExpr(1)); $$ = new ArrayVar($1, $4);}
 
 FunFP
   :                     {$$ = new FieldList();}

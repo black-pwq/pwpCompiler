@@ -38,14 +38,56 @@
 //     }
 // }
 
-int main() {
-  int a[10];
-  int k = 1;
-  k = 3;
+// void s(int w,int a[10000]){
+//   int z = w;
+//   // z = a[1];  
+//   // putint(s[1]);
+//   // int z = w;
+//   // return 0;
+// }
 
-  int name;
-  name = k;
-  a[2] = 1;
-  // a[0]  =1;
+
+int main() {
+  int arr[10000];
+  arr[1] = 1;
+
+  // int size = getint();
+  // int ii =  0;
+  // int i = 0;
+  // int tmp = 0;
+  // while(ii<size){
+  //   arr[ii] = getint();
+  //   ii=ii+1;
+  // }
+  // while(i < size - 1){
+  //   int j = 0;
+  //   while(j<size-i-1){
+  //     if(arr[j]<arr[j+1]){
+  //         tmp = arr[j];
+  //         arr[j] = arr[j+1];
+  //         arr[j+1] = tmp;
+  //     }
+  //     j=j+1;
+  //   }
+  //   i=i+1;
+  // }
+  // ii = 0;
+  // while(ii<size){
+  //   putint(arr[size-ii-1]);
+  //   ii=ii+1;
+  // }
+    // for (i = 0; i < size - 1; i++) {  
+    //     int j = 0;
+    //     for (j = 0; j < size - i - 1; j++) {  
+    //         if (arr[j] > arr[j+1]) {  
+    //             tmp = arr[j];  
+    //             arr[j] = arr[j+1];  
+    //             arr[j+1] = tmp;  
+    //         }  
+    //     }  
+    // } 
+
+
+  
   return 0;
 }

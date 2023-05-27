@@ -6,7 +6,7 @@ static char tn[][6] = {"undef", "int", "float", "void", "char", "bool"};
 SimpleSymbol::SimpleSymbol(BType t) : VarSymbol(t)
 {
 	assert(type != bt_undef);
-	assert(type != bt_void);
+	// assert(type != bt_void);
 }
 SimpleSymbol::SimpleSymbol(VarSymbol *other) : SimpleSymbol(other->type) {}
 int SimpleSymbol::getSize() const

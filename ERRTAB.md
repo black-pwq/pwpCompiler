@@ -19,3 +19,4 @@
 19. binary operations on offset of pointers are not allowed except add/sub
 20. break outside loop
 21. continue outside loop
+22. void type is not allowed for expression

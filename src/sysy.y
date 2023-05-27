@@ -59,7 +59,7 @@ using namespace std;
 %type <stmt_val> Stmt
 %type <vardef_val> VarDef
 %type <type_val> BType
-%type <var_val> Var
+%type <var_val> Var FunFPVar
 %type <var_decl_val> VarDecl
 %type <decl_val> Decl
 %type <exprlist_val> ExprList ArrayInitVal FunRP SquareExprList
@@ -187,9 +187,14 @@ FunDef
   | VOID IDENT '(' FunFP ')' Block  {$$ = new FunDef(new Type(BType::bt_void), $2, $4, $6);}
   ;
 
+FunFPVar
+  : Var   {$$ = $1;}
+  | IDENT '[' ']'       {auto e = new ExprList(new IntExpr(1)); $$ = new ArrayVar($1, e);}
+  | IDENT '[' ']' SquareExprList {$4->insert(new IntExpr(0)); $$ = new ArrayVar($1, $4);}
+
 FunFP
   :                     {$$ = new FieldList();}
-  | BType Var           {$$ = new FieldList(); $$->emplace_back(unique_ptr<Field>(new Field($1, $2)));}
+  | BType FunFPVar      {$$ = new FieldList(); $$->emplace_back(unique_ptr<Field>(new Field($1, $2)));}
   | FunFP ',' BType Var {$1->emplace_back(unique_ptr<Field>(new Field($3, $4))); $$ = $1;}
   ;
 

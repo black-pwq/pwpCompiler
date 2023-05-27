@@ -156,6 +156,7 @@ struct ExprList: Expr, Stmt {
 	ExprList() = default;
 	ExprList(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
 	void append(Expr *e) {list.emplace_back(std::unique_ptr<Expr>(e));}
+	void insert(Expr *e) {list.emplace(list.begin(), e);}
 
 	/**
 	 * Perform symbol lookup. Declarations are done by Decl class.

@@ -232,10 +232,18 @@ void FunDef::unitcodegen()
 				}
 			}
 			else if (dim == 1)
-			{
-
+			{	
+				// llvm::ArrayType::
+				
 				// field.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext),(*fields)[i]->var->nameSym->symbol->wordsInDim[0]));
-				field.push_back(llvm::IntegerType::getInt32PtrTy(*TheContext));
+				llvm::ArrayType *AT = llvm::ArrayType::get (llvm::Type::getInt32Ty (*TheContext), 10000);
+
+				llvm::PointerType *PT = llvm::PointerType::get(AT, 0);
+				// field.push_back(llvm::Type::getInt32PtrTy(*TheContext));
+				field.push_back(PT);
+				// auto tp = llvm::IntegerType::getInt32PtrTy(*TheContext);
+				// // tp = llvm::noun
+				// field.push_back(tp);
 			}
 			// else if(((*fields)[i]->type->btype)==bt_int ){
 
@@ -597,6 +605,7 @@ llvm::Value *Stmt::codegen()
 {
 	std::cout << "stm!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
+
 	return nullptr;
 }
 
@@ -616,25 +625,34 @@ llvm::Value *SimpleVar::codegen()
 	auto stable = bb->getValueSymbolTable();
 	auto fin = stable->lookup(*nameSym->name);
 	// std::cout << "dfsjsdjlfaewjfawe" << std::endl;
-	std::cout << *nameSym->name<<"  "<<fin->getType()->getTypeID() <<std::endl;
-	if(fin->getType()->getTypeID() == 13){
+	std::cout << *nameSym->name<<"******************"<<fin->getType()->getTypeID() <<std::endl;
+	if(fin->getType()->getTypeID() == 13){//形参里面的值
 
-	std::cout << *nameSym->name<<"  "<<fin->getType()->getTypeID() <<std::endl;
 		return fin;
 	}
-	if (*nameSym->name == "a")
+	std::cout << "new fuck flag " << std::endl;
+	assert(nameSym->symbol);
+	std::cout << nameSym->symbol->wordsInDim.size() << std::endl;
+
+	std::cout << "new fuck flagq " << std::endl;
+	if (nameSym->symbol->wordsInDim.size()>0)
 	{
+		// if(*nameSym->name == "a"){
+		// 	return fin;
+		// }
 		std::cout << "dfsjsdjlfaewjfawe" << std::endl;
 		std::vector<llvm::Value *> Idxs;
 		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
 		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
 		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), nameSym->symbol->wordsInDim[0]);
-		llvm::Value *array_i = Builder->CreateGEP(ty,fin,Idxs,*nameSym->name+"array_tmp");
+		llvm::Value *array_i = Builder->CreateInBoundsGEP(ty,fin,Idxs,*nameSym->name+"array_tmp");
 		// Builder->CreateConstGEP1_32
 		return array_i;
 	}
 	// return fin;
+
 	return Builder->CreateLoad(llvm::Type::getInt32Ty(*TheContext), fin, *nameSym->name + "itmp");
+	std::cout << "succ load sim";
 
 	// }
 
@@ -647,7 +665,6 @@ llvm::Value *SimpleVar::codegen()
 
 llvm::Value *ArrayVar::codegen()
 {
-	std::cout << "array var codegen " << std::endl;
 
 	// assert(nameSym->symbol);
 	if (nameSym->symbol->type == bt_int)
@@ -663,14 +680,15 @@ llvm::Value *ArrayVar::codegen()
 		auto stable = bb->getValueSymbolTable();
 
 		auto fin = stable->lookup(*nameSym->name);
+		std::cout << *nameSym->name<<"******************"<<fin->getType()->getTypeID() <<std::endl;
+		
 		std::vector<llvm::Value *> Idxs;
 		llvm::Value *itmp1 = exprs->list[0]->codegen();
 
 		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
 		Idxs.push_back(itmp1);
-		std::cout << "arrayfuck            dddddddddddddddddd"<<fin->getType()->getScalarType() << std::endl;
 
-		llvm::Value *array_i = Builder->CreateGEP(ty, fin, Idxs, "array_i");
+		llvm::Value *array_i = Builder->CreateInBoundsGEP(ty, fin, Idxs, "array_i");
 
 		return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext), array_i, *nameSym->name + "itmp");
 	}
@@ -683,6 +701,109 @@ llvm::Value *ArrayVar::codegen()
 	return nullptr;
 }
 
+llvm::Value *ArrayVar::addrgen()
+{
+
+	if (nameSym->symbol->type == bt_int)
+	{
+
+		
+
+		llvm::BasicBlock *bb = Builder->GetInsertBlock();
+
+		auto stable = bb->getValueSymbolTable();
+		
+		std::cout << "you are int array" << std::endl;
+		std::cout << bb->getParent()->getName().str() << std::endl;
+		for (auto &a:bb->getParent()->args()){
+
+			std::cout << a.getName().str() << std::endl;
+			if(*nameSym->name == a.getName().str()){
+				
+				std::cout << *nameSym->name<<"******************"<<a.getType()->getTypeID() <<std::endl;
+				std::cout << *nameSym->name<<"******************"<<(a.getType()->getScalarType()->getTypeID() == a.getType()->getTypeID() )<<std::endl;
+
+		
+
+				// auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), 10000);
+
+				// std::vector<llvm::Value *> Idxs;
+
+				// std::cout << "" << std::endl;
+
+				// llvm::Value *itmp1 = exprs->list[0]->codegen();
+
+
+				// Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
+				// // Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
+
+				// Idxs.push_back((itmp1));
+
+				// // assert(fin);
+				// llvm::Value *array_i = Builder->CreateGEP(ty, , Idxs, "array_i");
+				// std::cout << "you are int array" << std::endl;
+
+			}
+		}
+		// auto fin = TheModule->getNamedGlobal(*nameSym->name);
+
+		auto fin = stable->lookup(*nameSym->name);
+			std::cout << *nameSym->name<<"******************"<<fin->getType()->getTypeID() <<std::endl;
+			// std::cout << *nameSym->name<<"******************"<<(fin->getType()->getScalarType()->getTypeID() == fin->getType()->getTypeID() )<<std::endl;
+
+		// if(fin->getType()->getTypeID() == 15){
+		// 	return fin;
+		// }
+
+		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), 10000);
+
+		std::vector<llvm::Value *> Idxs;
+
+		std::cout << "" << std::endl;
+
+		// std::cout << exprs->list[0] << std::endl;
+		
+		
+		llvm::Value *itmp1 = exprs->list[0]->codegen();
+
+
+		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
+		// Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
+
+		Idxs.push_back((itmp1));
+
+		assert(fin);
+		llvm::Value *array_i = Builder->CreateInBoundsGEP(ty, fin, Idxs, "array_i");
+		std::cout << "you are int array" << std::endl;
+
+
+		return array_i;
+	}
+
+	else if (nameSym->symbol->type == bt_float)
+	{
+	}
+	return nullptr;
+}
+
+llvm::Value *SimpleVar::addrgen()
+{
+	if (nameSym->symbol->type == bt_int)
+	{
+		auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
+		llvm::BasicBlock *bb = Builder->GetInsertBlock();
+		auto stable = bb->getValueSymbolTable();
+		auto fin = stable->lookup(*nameSym->name);
+		return fin;
+		// return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
+		// TheContext
+	}
+
+	else if (nameSym->symbol->type == bt_float)
+	{
+	}
+	return nullptr;
+}
 void InitArrayDef::valuedef(BType bt)
 {
 	// std::cout << "array ??????" << std::endl;
@@ -751,68 +872,6 @@ llvm::Value *Var::addrgen()
 	return nullptr;
 }
 
-llvm::Value *ArrayVar::addrgen()
-{
-	std::cout << "get array var   " << std::endl;
-
-	if (nameSym->symbol->type == bt_int)
-	{
-
-		llvm::BasicBlock *bb = Builder->GetInsertBlock();
-
-		auto stable = bb->getValueSymbolTable();
-		std::cout << "you are int array" << std::endl;
-
-		// auto fin = TheModule->getNamedGlobal(*nameSym->name);
-
-		auto fin = stable->lookup(*nameSym->name);
-
-		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), 10000);
-
-		std::vector<llvm::Value *> Idxs;
-
-		std::cout << "" << std::endl;
-
-		llvm::Value *itmp1 = exprs->list[0]->codegen();
-
-
-		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
-		// Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
-
-		Idxs.push_back((itmp1));
-
-		assert(fin);
-		llvm::Value *array_i = Builder->CreateGEP(ty, fin, Idxs, "array_i");
-		std::cout << "you are int array" << std::endl;
-
-
-		return array_i;
-	}
-
-	else if (nameSym->symbol->type == bt_float)
-	{
-	}
-	return nullptr;
-}
-
-llvm::Value *SimpleVar::addrgen()
-{
-	if (nameSym->symbol->type == bt_int)
-	{
-		auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
-		llvm::BasicBlock *bb = Builder->GetInsertBlock();
-		auto stable = bb->getValueSymbolTable();
-		auto fin = stable->lookup(*nameSym->name);
-		return fin;
-		// return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
-		// TheContext
-	}
-
-	else if (nameSym->symbol->type == bt_float)
-	{
-	}
-	return nullptr;
-}
 
 llvm::Value *Assign::codegen()
 {
@@ -822,6 +881,7 @@ llvm::Value *Assign::codegen()
 	auto value = expr->codegen();
 	return Builder->CreateStore(value, vars);
 }
+
 
 llvm::Value *IntExpr::codegen()
 {

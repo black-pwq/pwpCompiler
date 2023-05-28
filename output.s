@@ -43,24 +43,62 @@ putint:
 	.size	putint, .Lfunc_end1-putint
 	.cfi_endproc
 
+	.globl	QuickSort
+	.p2align	2
+	.type	QuickSort,@function
+QuickSort:
+	.cfi_startproc
+	addi	sp, sp, -16
+	.cfi_def_cfa_offset 16
+	sd	ra, 8(sp)
+	sd	s0, 0(sp)
+	.cfi_offset ra, -8
+	.cfi_offset s0, -16
+	addi	s0, sp, 16
+	.cfi_def_cfa s0, 0
+	sext.w	a3, a2
+	sext.w	a4, a1
+	bge	a4, a3, .LBB2_4
+	mv	a5, sp
+	addi	a3, a5, -16
+	mv	sp, a3
+	sw	a1, -16(a5)
+	mv	a5, sp
+	addi	a1, a5, -16
+	mv	sp, a1
+	sw	a2, -16(a5)
+	mv	a5, sp
+	addi	a2, a5, -16
+	mv	sp, a2
+	slli	a4, a4, 2
+	add	a4, a0, a4
+	lw	a4, 0(a4)
+	sw	a4, -16(a5)
+.LBB2_2:
+	lw	a4, 0(a3)
+	lw	a5, 0(a1)
+	blt	a4, a5, .LBB2_2
+	lw	a1, 0(a2)
+	sw	a1, 4(a0)
+.LBB2_4:
+	addi	sp, s0, -16
+	ld	ra, 8(sp)
+	ld	s0, 0(sp)
+	addi	sp, sp, 16
+	ret
+.Lfunc_end2:
+	.size	QuickSort, .Lfunc_end2-QuickSort
+	.cfi_endproc
+
 	.globl	main
 	.p2align	2
 	.type	main,@function
 main:
 	.cfi_startproc
-	lui	a0, 10
-	addiw	a0, a0, -944
-	sub	sp, sp, a0
-	.cfi_def_cfa_offset 40016
-	li	a0, 1
-	sw	a0, 20(sp)
 	li	a0, 0
-	lui	a1, 10
-	addiw	a1, a1, -944
-	add	sp, sp, a1
 	ret
-.Lfunc_end2:
-	.size	main, .Lfunc_end2-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 	.cfi_endproc
 
 	.type	__unnamed_1,@object

@@ -1,4 +1,5 @@
-void QuickSort(int arr[1000], int low, int high)
+#include <stdio.h>
+void QuickSort(int arr[], int low, int high)
 {
     if (low < high)
     {
@@ -39,8 +40,12 @@ void QuickSort(int arr[1000], int low, int high)
     }
 }
 int main() {
-  int array[1000];
-  int len = 0;
+  int array[10] = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+  int b[10] = {1, 2, 3};
+  int len = 10;
   QuickSort(array,0,len-1);
+  for(int i = 0; i < 10; i++)
+    printf("%d ",array[i]);
+    printf("\n");
   return 0;
 }

@@ -428,6 +428,12 @@ int SimpleVar::typeCheck() const
  */
 int ArrayVar::typeCheck() const
 {
+	// typecheck expressions
+	for(auto &e : exprs->list) {
+		int errline;
+		if(( errline = e->typeCheck() ))
+			return errline;
+	}
 	// look the declareation
 	VarSymbol *s = static_cast<VarSymbol *>(varSt.lookup(*nameSym->name));
 	if (s == nullptr)

@@ -337,7 +337,7 @@ struct Var: Expr {
 	Var(std::string *s, ExprList *e) : nameSym(new NameSym<VarSymbol>(s)), exprs(e) {}
 	virtual int typeCheck() const = 0;
 	virtual void vardefwithoutinit(BType bt) = 0;
-	virtual llvm::Value * addrgen();
+	virtual llvm::Value * addrgen() = 0;
 	// virtual int sizeInWord() const = 0;
 protected:
 	virtual void dumpInner(const int i) const override;

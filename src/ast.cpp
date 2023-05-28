@@ -2,6 +2,250 @@
 
 using namespace std;
 
+int Expr::t;
+
+static float eval_bi(int l, BiOp op, int r)
+{
+	switch (op)
+	{
+	case BiOp::bi_add:
+		return l + r;
+	case BiOp::bi_sub:
+		return l - r;
+	case BiOp::bi_times:
+		return l * r;
+	case BiOp::bi_divide:
+		return l / r;
+	case BiOp::bi_eq:
+		return l == r;
+	case BiOp::bi_neq:
+		return l != r;
+	case BiOp::bi_lt:
+		return l < r;
+	case BiOp::bi_gt:
+		return l > r;
+	case BiOp::bi_le:
+		return l <= r;
+	case BiOp::bi_ge:
+		return l >= r;
+	case BiOp::bi_or:
+		return l || r;
+	case BiOp::bi_and:
+		return l && r;
+	default:
+		assert(false);
+	}
+}
+
+BiExpr::BiExpr(Expr *l, BiOp o, Expr *r) : left(l), op(o), right(r)
+{
+	evaluable = l->evaluable && r->evaluable;
+	if (evaluable)
+		num = eval_bi(left->num, o, right->num);
+}
+
+BiExpr::BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) : left(l), op(o), right(r)
+{
+	evaluable = l->evaluable && r->evaluable;
+	if (evaluable)
+		num = eval_bi(left->num, o, right->num);
+}
+
+BiExpr::BiExpr(Expr *l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r)
+{
+	evaluable = l->evaluable && r->evaluable;
+	if (evaluable)
+		num = eval_bi(left->num, o, right->num);
+}
+
+BiExpr::BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r)
+{
+	evaluable = l->evaluable && r->evaluable;
+	if (evaluable)
+		num = eval_bi(left->num, o, right->num);
+}
+
+UniExpr::UniExpr(UniOp o, Expr *e) : op(o), expr(e)
+{
+	evaluable = expr->evaluable;
+	if (evaluable)
+		switch (op)
+		{
+		case UniOp::uni_minus:
+			num = -expr->num;
+			break;
+		case UniOp::uni_not:
+			num = !expr->num;
+			break;
+		case UniOp::uni_plus:
+			break;
+		default:
+			assert(false);
+		}
+}
+
+void BaseAST::dump(const int i) const
+{
+	indent(i);
+	const char *name = abi::__cxa_demangle(typeid(*this).name(), NULL, NULL, NULL);
+	std::cout << name
+			  << " (#line " << lineno << ") "
+			  << "{" << std::endl;
+	dumpInner(i + 1);
+	indent(i);
+	std::cout << "}    $" << name << std::endl;
+}
+
+void BaseAST::dumpInner(const int i) const
+{
+	indent(i);
+	std::cout << "NONPRINTABLE" << std::endl;
+}
+
+void BaseAST::indent(const int i) const
+{
+	for (int j = 0; j < i; j++)
+		std::cout << "  ";
+}
+
+void FunDef::dumpInner(const int i) const
+{
+	type->dump(i);
+	indent(i);
+	cout << *nameSym->name << endl;
+	for (auto &f : *fields)
+		f->dump(i);
+	block->dump(i);
+}
+
+void Return::dumpInner(const int i) const
+{
+	expr->dump(i);
+}
+
+void Block::dumpInner(const int i) const
+{
+	for (auto &s : items)
+		s->dump(i);
+}
+
+void CompUnit::dumpInner(const int i) const
+{
+	for (auto &u : units)
+		u->dump(i);
+}
+
+void Field::dumpInner(const int i) const
+{
+	type->dump(i);
+	var->dump(i);
+}
+
+void VarDecl::dumpInner(const int i) const
+{
+	type->dump(i);
+	for (auto &vardef : *vardefs)
+	{
+		vardef->dump(i);
+	}
+}
+
+void VarDef::dumpInner(const int i) const
+{
+	var->dump(i);
+}
+
+void Var::dumpInner(const int i) const
+{
+	indent(i);
+	cout << *nameSym->name << endl;
+}
+
+void ArrayVar::dumpInner(const int i) const
+{
+	indent(i);
+	cout << *nameSym->name << endl;
+	for (auto &e : exprs->list)
+	{
+		e->dump(i);
+	}
+}
+
+void Expr::dumpInner(const int i) const
+{
+	indent(i);
+	cout << "eval: " << evaluable << endl;
+}
+
+void UniExpr::dumpInner(const int i) const
+{
+	Expr::dumpInner(i);
+	char n[] = {'+', '-', '!'};
+	indent(i);
+	cout << n[op] << endl;
+	expr->dump(i);
+}
+
+void BiExpr::dumpInner(const int i) const
+{
+
+	Expr::dumpInner(i);
+	const std::string opNames[] = {"+", "-", "*", "/", "&&", "||", "==", "!=", "<", "<=", ">", ">="};
+	left->dump(i);
+	indent(i);
+	std::cout << opNames[op] << " opcode = " << op << std::endl;
+	right->dump(i);
+}
+
+void StringExpr::dumpInner(const int i) const
+{
+	Expr::dumpInner(i);
+	indent(i);
+	cout << *str << endl;
+}
+
+void IntExpr::dumpInner(const int i) const
+{
+	Expr::dumpInner(i);
+	indent(i);
+	cout << num << endl;
+}
+
+void FloatExpr::dumpInner(const int i) const
+{
+	Expr::dumpInner(i);
+	indent(i);
+	cout << num << endl;
+}
+
+void Type::dumpInner(const int i) const
+{
+	const std::string t[] = {"undef", "int", "float", "void"};
+	indent(i);
+	std::cout << t[btype] << std::endl;
+}
+
+void InitVarDef::dumpInner(const int i) const
+{
+	var->dump(i);
+	expr->dump(i);
+}
+
+void Call::dumpInner(const int i) const
+{
+	indent(i);
+	cout << *name << endl;
+	params->Expr::dump(i);
+}
+
+void For::dumpInner(const int i) const
+{
+	init->dump(i);
+	expr->dump(i);
+	tail->dump(i);
+	body->dump(i);
+}
+
 llvm::Value *Return::codegen()
 {
 	return nullptr;
@@ -94,8 +338,6 @@ llvm::Value *Block::codegen()
 	return nullptr;
 }
 
-int Expr::t;
-
 llvm::Value *VarDecl::codegen()
 {
 	for (int i = 0; i < vardefs->size(); i++)
@@ -103,107 +345,6 @@ llvm::Value *VarDecl::codegen()
 		(*vardefs)[i]->valuedef(type->btype);
 	}
 	return nullptr;
-}
-
-static float eval_bi(int l, BiOp op, int r)
-{
-	switch (op)
-	{
-	case BiOp::bi_add:
-		return l + r;
-	case BiOp::bi_sub:
-		return l - r;
-	case BiOp::bi_times:
-		return l * r;
-	case BiOp::bi_divide:
-		return l / r;
-	case BiOp::bi_eq:
-		return l == r;
-	case BiOp::bi_neq:
-		return l != r;
-	case BiOp::bi_lt:
-		return l < r;
-	case BiOp::bi_gt:
-		return l > r;
-	case BiOp::bi_le:
-		return l <= r;
-	case BiOp::bi_ge:
-		return l >= r;
-	case BiOp::bi_or:
-		return l || r;
-	case BiOp::bi_and:
-		return l && r;
-	default:
-		assert(false);
-	}
-}
-
-BiExpr::BiExpr(Expr *l, BiOp o, Expr *r) : left(l), op(o), right(r)
-{
-	evaluable = l->evaluable && r->evaluable;
-	if (evaluable)
-		num = eval_bi(left->num, o, right->num);
-}
-BiExpr::BiExpr(std::shared_ptr<Expr> l, BiOp o, Expr *r) : left(l), op(o), right(r)
-{
-	evaluable = l->evaluable && r->evaluable;
-	if (evaluable)
-		num = eval_bi(left->num, o, right->num);
-}
-BiExpr::BiExpr(Expr *l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r)
-{
-	evaluable = l->evaluable && r->evaluable;
-	if (evaluable)
-		num = eval_bi(left->num, o, right->num);
-}
-BiExpr::BiExpr(std::shared_ptr<Expr> l, BiOp o, std::shared_ptr<Expr> r) : left(l), op(o), right(r)
-{
-	evaluable = l->evaluable && r->evaluable;
-	if (evaluable)
-		num = eval_bi(left->num, o, right->num);
-}
-
-UniExpr::UniExpr(UniOp o, Expr *e) : op(o), expr(e)
-{
-	evaluable = expr->evaluable;
-	if (evaluable)
-		switch (op)
-		{
-		case UniOp::uni_minus:
-			num = -expr->num;
-			break;
-		case UniOp::uni_not:
-			num = !expr->num;
-			break;
-		case UniOp::uni_plus:
-			break;
-		default:
-			assert(false);
-		}
-}
-
-void BaseAST::dump(const int i) const
-{
-	indent(i);
-	const char *name = abi::__cxa_demangle(typeid(*this).name(), NULL, NULL, NULL);
-	std::cout << name
-			  << " (#line " << lineno << ") "
-			  << "{" << std::endl;
-	dumpInner(i + 1);
-	indent(i);
-	std::cout << "}    $" << name << std::endl;
-}
-
-void BaseAST::dumpInner(const int i) const
-{
-	indent(i);
-	std::cout << "NONPRINTABLE" << std::endl;
-}
-
-void BaseAST::indent(const int i) const
-{
-	for (int j = 0; j < i; j++)
-		std::cout << "  ";
 }
 
 void FunDef::unitcodegen()
@@ -216,7 +357,6 @@ void FunDef::unitcodegen()
 		{
 			BType arty = ((*fields)[i]->type->btype);
 			int dim = ((*fields)[i]->var->nameSym->symbol->wordsInDim.size());
-			std::cout << dim << std::endl;
 			if (dim == 0)
 			{
 				switch (arty)
@@ -257,17 +397,13 @@ void FunDef::unitcodegen()
 
 	if ((type->btype) == bt_int)
 	{
-		std::cout << "int func" << std::endl;
 		ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext), field, false);
 	}
 	else if ((type->btype) == bt_float)
 	{
 		ft = llvm::FunctionType::get(llvm::Type::getFloatTy(*TheContext), field, false);
 	}
-	else if ((type->btype) == bt_char)
-	{
-		std::cout << "return char no support" << std::endl;
-	}
+	
 	else if ((type->btype) == bt_void)
 	{
 		ft = llvm::FunctionType::get(llvm::Type::getVoidTy(*TheContext), field, false);
@@ -291,11 +427,9 @@ void FunDef::unitcodegen()
 
 	for (int i = 0; i < block->items.size(); i++)
 	{
-		// std::cout << block->items.size() << "dddddddd";
 		*block->items[i]->codegen();
 	}
 
-	// std::cout <<"start11*****************"<<std::endl;
 
 	if (*nameSym->name == "main")
 	{
@@ -308,93 +442,14 @@ void FunDef::unitcodegen()
 
 }
 
-void FunDef::dumpInner(const int i) const
-{
-	type->dump(i);
-	indent(i);
-	cout << *nameSym->name << endl;
-	for (auto &f : *fields)
-		f->dump(i);
-	block->dump(i);
-}
-
-void Return::dumpInner(const int i) const
-{
-	expr->dump(i);
-}
-
-void Block::dumpInner(const int i) const
-{
-	for (auto &s : items)
-		s->dump(i);
-}
-
 void CompUnit::unitcodegen()
 {
 	// initmodule();
-	std::cout << "compunit count " << units.size() << std::endl;
 	for (int i = 0; i < units.size(); i++)
 	{
 
 		units[i]->unitcodegen();
 	}
-}
-
-void CompUnit::dumpInner(const int i) const
-{
-	for (auto &u : units)
-		u->dump(i);
-}
-
-void Field::dumpInner(const int i) const
-{
-	type->dump(i);
-	var->dump(i);
-}
-
-void VarDecl::dumpInner(const int i) const
-{
-	type->dump(i);
-	for (auto &vardef : *vardefs)
-	{
-		vardef->dump(i);
-	}
-}
-
-void VarDef::dumpInner(const int i) const
-{
-	var->dump(i);
-}
-
-void Var::dumpInner(const int i) const
-{
-	indent(i);
-	cout << *nameSym->name << endl;
-}
-
-void ArrayVar::dumpInner(const int i) const
-{
-	indent(i);
-	cout << *nameSym->name << endl;
-	for (auto &e : exprs->list)
-	{
-		e->dump(i);
-	}
-}
-
-void Expr::dumpInner(const int i) const
-{
-	indent(i);
-	cout << "eval: " << evaluable << endl;
-}
-
-void UniExpr::dumpInner(const int i) const
-{
-	Expr::dumpInner(i);
-	char n[] = {'+', '-', '!'};
-	indent(i);
-	cout << n[op] << endl;
-	expr->dump(i);
 }
 
 llvm::Value *UniExpr::codegen()
@@ -468,7 +523,6 @@ llvm::Value *BiExpr::codegen()
 	if (!L || !R)
 		return nullptr;
 	// if(typeL == llvm::Type::DoubleTyID)
-	std::cout << "succ binexpr" << std::endl;
 	switch (op)
 	{
 	case bi_add:
@@ -513,14 +567,12 @@ llvm::Value *Call::codegen()
 
 	std::vector<llvm::Value *> inpar;
 
-	std::cout << "found " << params->list.size() << std::endl;
 
 	for (int i = 0; i < params->list.size(); i++)
 	{
 
 		auto eachvalue = params->list[i]->codegen();
 
-		std::cout << i << std::endl;
 
 		inpar.push_back(eachvalue);
 	}
@@ -542,53 +594,12 @@ llvm::Value *Expr::codegen()
 llvm::Value *ExprList::codegen()
 {
 
-	std::cout << "exprlist!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-	std::cout << list.size() << std::endl;
 
 	for (int i = 0; i < list.size(); i++)
 	{
 		list[i]->codegen();
 	}
 	return nullptr;
-}
-
-void BiExpr::dumpInner(const int i) const
-{
-
-	Expr::dumpInner(i);
-	const std::string opNames[] = {"+", "-", "*", "/", "&&", "||", "==", "!=", "<", "<=", ">", ">="};
-	left->dump(i);
-	indent(i);
-	std::cout << opNames[op] << " opcode = " << op << std::endl;
-	right->dump(i);
-}
-
-void StringExpr::dumpInner(const int i) const
-{
-	Expr::dumpInner(i);
-	indent(i);
-	cout << *str << endl;
-}
-
-void IntExpr::dumpInner(const int i) const
-{
-	Expr::dumpInner(i);
-	indent(i);
-	cout << num << endl;
-}
-
-void FloatExpr::dumpInner(const int i) const
-{
-	Expr::dumpInner(i);
-	indent(i);
-	cout << num << endl;
-}
-
-void Type::dumpInner(const int i) const
-{
-	const std::string t[] = {"undef", "int", "float", "void"};
-	indent(i);
-	std::cout << t[btype] << std::endl;
 }
 
 llvm::Value *Continue::codegen()
@@ -603,7 +614,6 @@ llvm::Value *Break::codegen()
 
 llvm::Value *Stmt::codegen()
 {
-	std::cout << "stm!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
 
 	return nullptr;
@@ -612,11 +622,6 @@ llvm::Value *Stmt::codegen()
 void Unit::unitcodegen()
 {
 }
-void InitVarDef::dumpInner(const int i) const
-{
-	var->dump(i);
-	expr->dump(i);
-}
 
 llvm::Value *SimpleVar::codegen()
 {
@@ -624,23 +629,16 @@ llvm::Value *SimpleVar::codegen()
 	llvm::BasicBlock *bb = Builder->GetInsertBlock();
 	auto stable = bb->getValueSymbolTable();
 	auto fin = stable->lookup(*nameSym->name);
-	// std::cout << "dfsjsdjlfaewjfawe" << std::endl;
-	std::cout << *nameSym->name<<"******************"<<fin->getType()->getTypeID() <<std::endl;
 	if(fin->getType()->getTypeID() == 13){//形参里面的值
 
 		return fin;
 	}
-	std::cout << "new fuck flag " << std::endl;
-	assert(nameSym->symbol);
-	std::cout << nameSym->symbol->wordsInDim.size() << std::endl;
 
-	std::cout << "new fuck flagq " << std::endl;
 	if (nameSym->symbol->wordsInDim.size()>0)
 	{
 		// if(*nameSym->name == "a"){
 		// 	return fin;
 		// }
-		std::cout << "dfsjsdjlfaewjfawe" << std::endl;
 		std::vector<llvm::Value *> Idxs;
 		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
 		Idxs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), 0));
@@ -652,7 +650,6 @@ llvm::Value *SimpleVar::codegen()
 	// return fin;
 
 	return Builder->CreateLoad(llvm::Type::getInt32Ty(*TheContext), fin, *nameSym->name + "itmp");
-	std::cout << "succ load sim";
 
 	// }
 
@@ -680,7 +677,6 @@ llvm::Value *ArrayVar::codegen()
 		auto stable = bb->getValueSymbolTable();
 
 		auto fin = stable->lookup(*nameSym->name);
-		std::cout << *nameSym->name<<"******************"<<fin->getType()->getTypeID() <<std::endl;
 		
 		std::vector<llvm::Value *> Idxs;
 		llvm::Value *itmp1 = exprs->list[0]->codegen();
@@ -695,7 +691,6 @@ llvm::Value *ArrayVar::codegen()
 
 	else if (nameSym->symbol->type == bt_float)
 	{
-		// std::cout << "this" << std::endl;
 	}
 
 	return nullptr;
@@ -713,16 +708,12 @@ llvm::Value *ArrayVar::addrgen()
 
 		auto stable = bb->getValueSymbolTable();
 		
-		std::cout << "you are int array" << std::endl;
-		std::cout << bb->getParent()->getName().str() << std::endl;
+
 		for (auto &a:bb->getParent()->args()){
 
-			std::cout << a.getName().str() << std::endl;
 			if(*nameSym->name == a.getName().str()){
 				
-				std::cout << *nameSym->name<<"******************"<<a.getType()->getTypeID() <<std::endl;
-				std::cout << *nameSym->name<<"******************"<<(a.getType()->getScalarType()->getTypeID() == a.getType()->getTypeID() )<<std::endl;
-
+			
 		
 
 				// auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), 10000);
@@ -748,9 +739,7 @@ llvm::Value *ArrayVar::addrgen()
 		// auto fin = TheModule->getNamedGlobal(*nameSym->name);
 
 		auto fin = stable->lookup(*nameSym->name);
-			std::cout << *nameSym->name<<"******************"<<fin->getType()->getTypeID() <<std::endl;
-			// std::cout << *nameSym->name<<"******************"<<(fin->getType()->getScalarType()->getTypeID() == fin->getType()->getTypeID() )<<std::endl;
-
+		
 		// if(fin->getType()->getTypeID() == 15){
 		// 	return fin;
 		// }
@@ -759,9 +748,7 @@ llvm::Value *ArrayVar::addrgen()
 
 		std::vector<llvm::Value *> Idxs;
 
-		std::cout << "" << std::endl;
 
-		// std::cout << exprs->list[0] << std::endl;
 		
 		
 		llvm::Value *itmp1 = exprs->list[0]->codegen();
@@ -774,7 +761,6 @@ llvm::Value *ArrayVar::addrgen()
 
 		assert(fin);
 		llvm::Value *array_i = Builder->CreateInBoundsGEP(ty, fin, Idxs, "array_i");
-		std::cout << "you are int array" << std::endl;
 
 
 		return array_i;
@@ -790,34 +776,34 @@ llvm::Value *SimpleVar::addrgen()
 {
 	if (nameSym->symbol->type == bt_int)
 	{
-		auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
 		llvm::BasicBlock *bb = Builder->GetInsertBlock();
 		auto stable = bb->getValueSymbolTable();
 		auto fin = stable->lookup(*nameSym->name);
 		return fin;
-		// return Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
-		// TheContext
 	}
 
 	else if (nameSym->symbol->type == bt_float)
 	{
+		llvm::BasicBlock *bb = Builder->GetInsertBlock();
+		auto stable = bb->getValueSymbolTable();
+		auto fin = stable->lookup(*nameSym->name);
+		return fin;
 	}
 	return nullptr;
 }
+
 void InitArrayDef::valuedef(BType bt)
 {
-	// std::cout << "array ??????" << std::endl;
+	//Temporarily does not support array initialization assignment
 }
 
 void InitVarDef::valuedef(BType bt)
 {
-	// std::cout << "var init!!!!!!!!!!!!" << std::endl;
 
 	var->vardefwithoutinit(bt);
 	llvm::BasicBlock *bb = Builder->GetInsertBlock();
 	auto stable = bb->getValueSymbolTable();
 	auto fin = stable->lookup(*var->nameSym->name);
-	// auto vars = Builder->CreateLoad(llvm::IntegerType::getInt32Ty(*TheContext),fin,"itmp");
 	auto value = expr->codegen();
 	Builder->CreateStore(value, fin);
 }
@@ -848,65 +834,39 @@ void SimpleVar::vardefwithoutinit(BType bt)
 
 void ArrayVar::vardefwithoutinit(BType bt)
 {
-	std::cout << "array def!!!!!!!!!!!!!!" << std::endl;
 	switch (bt)
 	{
 	case bt_int:
 
-		// auto ty = llvm::IntegerType::getInt32Ty(*TheContext);
-		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), nameSym->symbol->wordsInDim[0]);
-		Builder->CreateAlloca(ty, NULL, *nameSym->name); // 先定义返回值和长度再初始化
-		// TheModule->getOrInsertGlobal("global array",ty);
-		// llvm::GlobalVariable(/*Module=*/*TheModule,
-		// /*Type=*/ty,
-		// /*isConstant=*/false,
-		// /*Linkage=*/llvm::GlobalValue::PrivateLinkage,
-		// /*Initializer=*/0, // has initializer, specified below
-		// /*Name=*/"array_global");
+		auto ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*TheContext), nameSym->symbol->wordsInDim[0]);// Currently only one-dimensional arrays are supported
+		Builder->CreateAlloca(ty, NULL, *nameSym->name);
+		break;
+	
+	case bt_float:
+
+		auto ty = llvm::ArrayType::get(llvm::Type::getFloatTy(*TheContext), nameSym->symbol->wordsInDim[0]);
+		Builder->CreateAlloca(ty, NULL, *nameSym->name);
+		break;
+	default:
 		break;
 	}
+	
 }
-
-llvm::Value *Var::addrgen()
-{
-	return nullptr;
-}
-
 
 llvm::Value *Assign::codegen()
 {
-	std::cout << "assign!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-
 	auto vars = var->addrgen();
 	auto value = expr->codegen();
 	return Builder->CreateStore(value, vars);
 }
 
-
 llvm::Value *IntExpr::codegen()
 {
-
 	return llvm::ConstantInt::get(llvm::Type::getInt32Ty(*TheContext), (int)(num));
-	return nullptr;
 }
 
 llvm::Value *FloatExpr::codegen()
 {
 	return llvm::ConstantFP::get(*TheContext, llvm::APFloat(num));
-	return nullptr;
 }
 
-void Call::dumpInner(const int i) const
-{
-	indent(i);
-	cout << *name << endl;
-	params->Expr::dump(i);
-}
-
-void For::dumpInner(const int i) const
-{
-	init->dump(i);
-	expr->dump(i);
-	tail->dump(i);
-	body->dump(i);
-}

@@ -447,7 +447,8 @@ int ArrayVar::typeCheck() const
 		VarSymbol *n = new SimpleSymbol(s->type);
 		varSt.insert(tmpName(), n);
 		// assert(varSt.insert(tmpName(), n) == n); // == n
-		nameSym->symbol = n;
+		// related symbol should refer to the declared one
+		nameSym->symbol = s;
 		// fall to return
 	}
 	// add/sub

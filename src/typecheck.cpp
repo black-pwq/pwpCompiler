@@ -256,7 +256,15 @@ int If::typeCheck() const
 
 int Call::typeCheck() const
 {
-	// predifined vararg funcion
+	// first check if the symbols (expr) used in formals are defined 
+	for (auto &e : params->list)
+	{
+		// also insert symbol info into symtab
+		int errline = e->typeCheck();
+		if (errline)
+			return errline;
+	}
+	// done for predifined vararg funcion
 	if (*name == "printf" || *name == "scanf")
 		return 0;
 	FunSymbol *s = static_cast<FunSymbol *>(funSt.lookup(*name));
@@ -266,16 +274,9 @@ int Call::typeCheck() const
 	// check if #number of argument match with definition
 	if (params->list.size() != s->types.size())
 		return errid = 9, lineno;
-	for (auto &e : params->list)
-	{
-		// first check if the symbols used in expr are defined
-		int errline = e->typeCheck();
-		if (errline)
-			return errline;
-	}
 	// then check if the types also match
 	auto &exprs = params->list;
-	for (std::vector<std::unique_ptr<Expr>>::size_type i = 0; i < params->list.size(); ++i)
+	for (size_t i = 0; i < params->list.size(); ++i)
 	{
 		auto es = look_up_var(exprs[i]->tmpName());
 		if (es->type != s->types[i]->type)
